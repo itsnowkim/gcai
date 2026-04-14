@@ -17,6 +17,8 @@ class ExtractedRelation(BaseModel):
     path: str
     source: str
     destination: str
+    source_id: str | None = None
+    destination_id: str | None = None
     metadata: dict[str, str | bool] = Field(default_factory=dict)
 
 

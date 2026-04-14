@@ -1,4 +1,5 @@
 from itertools import islice
+import json
 
 from neo4j import Driver
 
@@ -23,9 +24,17 @@ class Neo4jGraphWriter:
         )
 
     def upsert_relations(self, relations: list[ExtractedRelation]) -> int:
+        rows_by_id: dict[str, dict] = {}
+        for relation in relations:
+            if relation.source_id is None or relation.destination_id is None:
+                continue
+            rows_by_id[relation.id] = {
+                **relation.model_dump(mode="json"),
+                "metadata_json": json.dumps(relation.metadata, ensure_ascii=False, sort_keys=True),
+            }
         return self._write_batches(
             query=UPSERT_RELATIONS_QUERY,
-            rows=[relation.model_dump(mode="json") for relation in relations],
+            rows=list(rows_by_id.values()),
         )
 
     def _write_batches(self, *, query: str, rows: list[dict]) -> int:

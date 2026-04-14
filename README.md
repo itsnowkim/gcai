@@ -95,3 +95,10 @@ docker-compose up --build
 - 문서 ID는 `symbol.id`를 그대로 사용해 재색인 시 안정적으로 upsert합니다.
 - 문서 본문은 `signature + body` 형식으로 구성하고, metadata에는 `qualified_name`, `path`, `symbol_kind`, 라인 정보 등을 포함합니다.
 - `app/storage/chroma/writer.py`는 배치 `upsert`를 수행하고, `app/services/chroma_ingest.py`의 `ingest_scan_result_to_chroma(...)`가 전체 적재를 오케스트레이션합니다.
+
+## Phase 1-7 범위
+
+- `app/services/indexing.py`의 `run_initial_index(...)`가 스캔, Neo4j 적재, Chroma 적재를 순서대로 조합합니다.
+- 실행용 CLI는 `python -m app.cli.index_codebase <repo_path>` 형태로 사용할 수 있습니다.
+- 결과는 `scanned_files`, `skipped_files`, `upserted_nodes`, `upserted_edges`, `upserted_documents`를 JSON으로 반환합니다.
+- `repo_path` 검증은 스캔 서비스에서 공통으로 처리합니다.

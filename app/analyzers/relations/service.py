@@ -30,17 +30,21 @@ def _build_relation_result(
     seen_ids: set[str] = set()
     file_symbol = next(symbol for symbol in symbol_result.symbols if symbol.kind == SymbolKind.FILE)
     known_symbols = {symbol.qualified_name for symbol in symbol_result.symbols}
+    symbols_by_qualified_name = {symbol.qualified_name: symbol for symbol in symbol_result.symbols}
 
     for symbol in symbol_result.symbols:
         if symbol.kind == SymbolKind.FILE:
             continue
 
         source = symbol.parent_name if symbol.parent_name in known_symbols else file_symbol.qualified_name
+        source_symbol = symbols_by_qualified_name.get(source, file_symbol)
         contains_relation = _make_relation(
             kind=RelationKind.CONTAINS,
             path=symbol_result.path,
             source=source,
             destination=symbol.qualified_name,
+            source_id=source_symbol.id,
+            destination_id=symbol.id,
         )
         if contains_relation.id not in seen_ids:
             relations.append(contains_relation)
@@ -53,6 +57,8 @@ def _build_relation_result(
                 path=symbol_result.path,
                 source=file_symbol.qualified_name,
                 destination=imported_target,
+                source_id=file_symbol.id,
+                destination_id=symbol.id,
                 metadata={"is_static": symbol.is_static},
             )
             if imports_relation.id not in seen_ids:
@@ -82,6 +88,8 @@ def _make_relation(
     path: str,
     source: str,
     destination: str,
+    source_id: str | None = None,
+    destination_id: str | None = None,
     metadata: dict[str, str | bool] | None = None,
 ) -> ExtractedRelation:
     relation_id = f"{kind}:{path}:{source}->{destination}"
@@ -91,6 +99,8 @@ def _make_relation(
         path=path,
         source=source,
         destination=destination,
+        source_id=source_id,
+        destination_id=destination_id,
         metadata=metadata or {},
     )
 
@@ -104,6 +114,7 @@ def _extract_call_relations(
         for symbol in symbol_result.symbols
         if symbol.kind in {SymbolKind.FUNCTION, SymbolKind.METHOD, SymbolKind.CONSTRUCTOR}
     ]
+    callable_symbols_by_qualified_name = {symbol.qualified_name: symbol for symbol in callable_symbols}
     relations: list[ExtractedRelation] = []
     for node in _walk(parsed_source.tree.root_node):
         if node.type not in {"call", "call_expression", "method_invocation"}:
@@ -118,6 +129,10 @@ def _extract_call_relations(
                 path=symbol_result.path,
                 source=caller.qualified_name,
                 destination=callee,
+                source_id=caller.id,
+                destination_id=callable_symbols_by_qualified_name.get(callee).id
+                if callee in callable_symbols_by_qualified_name
+                else None,
             )
         )
     return relations
@@ -144,6 +159,7 @@ def _extract_access_relations(
         }
     ]
     variable_symbols = [symbol for symbol in symbol_result.symbols if symbol.kind == SymbolKind.VARIABLE]
+    variable_symbols_by_qualified_name = {symbol.qualified_name: symbol for symbol in variable_symbols}
     relations: list[ExtractedRelation] = []
 
     for node in _walk(parsed_source.tree.root_node):
@@ -152,23 +168,23 @@ def _extract_access_relations(
             continue
 
         if parsed_source.language == "python" and node.type == "assignment":
-            relations.extend(_assignment_relations(parsed_source.language, node, owner, variable_symbols))
+            relations.extend(_assignment_relations(parsed_source.language, node, owner, variable_symbols, variable_symbols_by_qualified_name))
         elif parsed_source.language == "python" and node.type == "return_statement":
-            relations.extend(_expression_reads_relations(parsed_source.language, node, owner, variable_symbols))
+            relations.extend(_expression_reads_relations(parsed_source.language, node, owner, variable_symbols, variable_symbols_by_qualified_name))
         elif parsed_source.language == "java":
             if node.type == "local_variable_declaration":
-                relations.extend(_java_local_variable_relations(node, owner, variable_symbols))
+                relations.extend(_java_local_variable_relations(node, owner, variable_symbols, variable_symbols_by_qualified_name))
             elif node.type == "assignment_expression":
-                relations.extend(_assignment_relations(parsed_source.language, node, owner, variable_symbols))
+                relations.extend(_assignment_relations(parsed_source.language, node, owner, variable_symbols, variable_symbols_by_qualified_name))
             elif node.type == "return_statement":
-                relations.extend(_expression_reads_relations(parsed_source.language, node, owner, variable_symbols))
+                relations.extend(_expression_reads_relations(parsed_source.language, node, owner, variable_symbols, variable_symbols_by_qualified_name))
         elif parsed_source.language in {"c", "cpp"}:
             if node.type == "declaration":
-                relations.extend(_c_declaration_relations(node, owner, variable_symbols))
+                relations.extend(_c_declaration_relations(node, owner, variable_symbols, variable_symbols_by_qualified_name))
             elif node.type == "assignment_expression":
-                relations.extend(_assignment_relations(parsed_source.language, node, owner, variable_symbols))
+                relations.extend(_assignment_relations(parsed_source.language, node, owner, variable_symbols, variable_symbols_by_qualified_name))
             elif node.type == "return_statement":
-                relations.extend(_expression_reads_relations(parsed_source.language, node, owner, variable_symbols))
+                relations.extend(_expression_reads_relations(parsed_source.language, node, owner, variable_symbols, variable_symbols_by_qualified_name))
 
     return relations
 
@@ -218,16 +234,16 @@ def _node_text(node: Node | None) -> str | None:
     return node.text.decode("utf-8").strip()
 
 
-def _assignment_relations(language: str, node: Node, owner, variable_symbols) -> list[ExtractedRelation]:
+def _assignment_relations(language: str, node: Node, owner, variable_symbols, variable_symbols_by_qualified_name) -> list[ExtractedRelation]:
     left = node.child_by_field_name("left") or (node.named_children[0] if node.named_children else None)
     right = node.child_by_field_name("right") or (node.named_children[-1] if node.named_children else None)
     relations: list[ExtractedRelation] = []
-    relations.extend(_write_relations(owner, _resolve_references(language, left, owner, variable_symbols)))
-    relations.extend(_read_relations(owner, _resolve_references(language, right, owner, variable_symbols)))
+    relations.extend(_write_relations(owner, _resolve_references(language, left, owner, variable_symbols), variable_symbols_by_qualified_name))
+    relations.extend(_read_relations(owner, _resolve_references(language, right, owner, variable_symbols), variable_symbols_by_qualified_name))
     return relations
 
 
-def _java_local_variable_relations(node: Node, owner, variable_symbols) -> list[ExtractedRelation]:
+def _java_local_variable_relations(node: Node, owner, variable_symbols, variable_symbols_by_qualified_name) -> list[ExtractedRelation]:
     relations: list[ExtractedRelation] = []
     for declarator in [child for child in node.named_children if child.type == "variable_declarator"]:
         name_node = declarator.child_by_field_name("name") or next(
@@ -237,12 +253,12 @@ def _java_local_variable_relations(node: Node, owner, variable_symbols) -> list[
         value_node = declarator.child_by_field_name("value") or (
             declarator.named_children[-1] if len(declarator.named_children) > 1 else None
         )
-        relations.extend(_write_relations(owner, _resolve_references("java", name_node, owner, variable_symbols)))
-        relations.extend(_read_relations(owner, _resolve_references("java", value_node, owner, variable_symbols)))
+        relations.extend(_write_relations(owner, _resolve_references("java", name_node, owner, variable_symbols), variable_symbols_by_qualified_name))
+        relations.extend(_read_relations(owner, _resolve_references("java", value_node, owner, variable_symbols), variable_symbols_by_qualified_name))
     return relations
 
 
-def _c_declaration_relations(node: Node, owner, variable_symbols) -> list[ExtractedRelation]:
+def _c_declaration_relations(node: Node, owner, variable_symbols, variable_symbols_by_qualified_name) -> list[ExtractedRelation]:
     relations: list[ExtractedRelation] = []
     for declarator in [child for child in node.named_children if child.type == "init_declarator"]:
         name_node = next(
@@ -250,36 +266,40 @@ def _c_declaration_relations(node: Node, owner, variable_symbols) -> list[Extrac
             None,
         )
         value_node = declarator.named_children[-1] if declarator.named_children else None
-        relations.extend(_write_relations(owner, _resolve_references("c", name_node, owner, variable_symbols)))
+        relations.extend(_write_relations(owner, _resolve_references("c", name_node, owner, variable_symbols), variable_symbols_by_qualified_name))
         if value_node is not None and value_node is not name_node:
-            relations.extend(_read_relations(owner, _resolve_references("c", value_node, owner, variable_symbols)))
+            relations.extend(_read_relations(owner, _resolve_references("c", value_node, owner, variable_symbols), variable_symbols_by_qualified_name))
     return relations
 
 
-def _expression_reads_relations(language: str, node: Node, owner, variable_symbols) -> list[ExtractedRelation]:
+def _expression_reads_relations(language: str, node: Node, owner, variable_symbols, variable_symbols_by_qualified_name) -> list[ExtractedRelation]:
     expression = node.named_children[-1] if node.named_children else None
-    return _read_relations(owner, _resolve_references(language, expression, owner, variable_symbols))
+    return _read_relations(owner, _resolve_references(language, expression, owner, variable_symbols), variable_symbols_by_qualified_name)
 
 
-def _write_relations(owner, destinations: list[str]) -> list[ExtractedRelation]:
+def _write_relations(owner, destinations: list[str], variable_symbols_by_qualified_name) -> list[ExtractedRelation]:
     return [
         _make_relation(
             kind=RelationKind.WRITES,
             path=owner.path,
             source=owner.qualified_name,
             destination=destination,
+            source_id=owner.id,
+            destination_id=variable_symbols_by_qualified_name[destination].id,
         )
         for destination in destinations
     ]
 
 
-def _read_relations(owner, destinations: list[str]) -> list[ExtractedRelation]:
+def _read_relations(owner, destinations: list[str], variable_symbols_by_qualified_name) -> list[ExtractedRelation]:
     return [
         _make_relation(
             kind=RelationKind.READS,
             path=owner.path,
             source=owner.qualified_name,
             destination=destination,
+            source_id=owner.id,
+            destination_id=variable_symbols_by_qualified_name[destination].id,
         )
         for destination in destinations
     ]

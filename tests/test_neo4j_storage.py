@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from app.parsers.tree_sitter import parse_source_code
 from app.schemas.scan import CodebaseScanResult, ScannedFile
 from app.services.graph_ingest import ingest_scan_result_to_neo4j
+from app.storage.neo4j.queries import UPSERT_RELATIONS_QUERY, UPSERT_SYMBOLS_QUERY
 from app.storage.neo4j.schema import CONSTRAINT_QUERIES, ensure_neo4j_constraints
 from app.storage.neo4j.writer import Neo4jGraphWriter, _batched
 from app.analyzers.symbols import extract_symbols
@@ -32,6 +33,16 @@ def test_ensure_neo4j_constraints_runs_expected_queries() -> None:
     assert [call.args[0] for call in session.run.call_args_list] == list(CONSTRAINT_QUERIES)
 
 
+def test_upsert_symbols_query_applies_file_label_conditionally() -> None:
+    assert "CASE WHEN row.kind = 'file'" in UPSERT_SYMBOLS_QUERY
+    assert "REMOVE n:File" in UPSERT_SYMBOLS_QUERY
+
+
+def test_upsert_relations_query_stores_metadata_as_json() -> None:
+    assert "metadata_json" in UPSERT_RELATIONS_QUERY
+    assert "DELETE existing" in UPSERT_RELATIONS_QUERY
+
+
 def test_neo4j_graph_writer_executes_batched_upserts() -> None:
     driver = MagicMock()
     session = MagicMock()
@@ -54,6 +65,24 @@ class Greeter:
 
     assert upserted_count == 3
     assert session.execute_write.call_count == 2
+
+
+def test_upsert_relations_deduplicates_rows_by_relation_id() -> None:
+    driver = MagicMock()
+    session = MagicMock()
+    driver.session.return_value.__enter__.return_value = session
+    session.execute_write.return_value = 1
+    writer = Neo4jGraphWriter(driver, database="neo4j", batch_size=10)
+
+    relation = extract_relations(
+        parse_source_code("value = 1\n", "python", path="sample.py")
+    ).relations[0]
+
+    upserted_count = writer.upsert_relations([relation, relation])
+
+    assert upserted_count == 1
+    rows = session.execute_write.call_args.args[2]
+    assert len(rows) == 1
 
 
 def test_ingest_scan_result_to_neo4j_orchestrates_driver_lifecycle() -> None:
