@@ -79,3 +79,11 @@ docker-compose up --build
 - 기본 제외 디렉토리는 `.git`, `.venv`, `node_modules`, `dist`, `build`, `__pycache__` 등을 포함합니다.
 - 기본 대용량 파일 제외 기준은 `512 KiB`입니다.
 - 스캔 결과는 파일별 `symbols`, `relations`, 스킵 사유를 함께 반환합니다.
+
+## Phase 1-5 범위
+
+- `app/storage/neo4j/client.py`가 driver 생성과 연결 확인을 담당합니다.
+- `app/storage/neo4j/schema.py`가 제약 조건 생성 책임을 가집니다.
+- `app/storage/neo4j/writer.py`는 `UNWIND` 기반 배치 upsert를 수행합니다.
+- 노드와 엣지는 `MERGE` 기반으로 upsert되며, 재적재 시 `id`를 기준으로 갱신됩니다.
+- `app/services/graph_ingest.py`의 `ingest_scan_result_to_neo4j(...)`가 스캔 결과 전체를 적재하고 통계를 반환합니다.
