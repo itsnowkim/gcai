@@ -44,6 +44,10 @@ class BaseSymbolExtractor:
         code: str,
         parent_name: str | None,
         body: str | None,
+        parameters: list[str] | None = None,
+        super_types: list[str] | None = None,
+        aliased_type: str | None = None,
+        is_static: bool = False,
     ) -> ExtractedSymbol:
         start_line = node.start_point[0] + 1
         end_line = node.end_point[0] + 1
@@ -60,6 +64,10 @@ class BaseSymbolExtractor:
             code=code,
             body=body,
             parent_name=parent_name,
+            parameters=parameters or [],
+            super_types=super_types or [],
+            aliased_type=aliased_type,
+            is_static=is_static,
         )
 
     def _symbol_id(self, kind: SymbolKind, qualified_name: str, start_line: int) -> str:

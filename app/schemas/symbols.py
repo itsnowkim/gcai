@@ -1,10 +1,11 @@
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SymbolKind(StrEnum):
     FILE = "file"
+    IMPORT = "import"
     NAMESPACE = "namespace"
     CLASS = "class"
     STRUCT = "struct"
@@ -18,6 +19,7 @@ class SymbolKind(StrEnum):
     METHOD = "method"
     CONSTRUCTOR = "constructor"
     VARIABLE = "variable"
+    TYPE_ALIAS = "type_alias"
 
 
 class ExtractedSymbol(BaseModel):
@@ -33,6 +35,10 @@ class ExtractedSymbol(BaseModel):
     code: str
     body: str | None = None
     parent_name: str | None = None
+    parameters: list[str] = Field(default_factory=list)
+    super_types: list[str] = Field(default_factory=list)
+    aliased_type: str | None = None
+    is_static: bool = False
 
 
 class SymbolExtractionResult(BaseModel):

@@ -66,7 +66,8 @@ docker-compose up --build
 
 - 심볼 추출은 공통 스키마와 언어별 모듈로 분리되어 있습니다.
 - 언어별 extractor는 `app/analyzers/symbols/python.py`, `java.py`, `c.py`, `cpp.py`에 위치합니다.
-- 추출 대상 심볼은 `file`, `namespace`, `class`, `struct`, `interface`, `enum`, `enum_member`, `union`, `record`, `annotation`, `function`, `method`, `constructor`, `variable`입니다.
-- Java는 `class`, `interface`, `enum`, `record`, `annotation`, `constructor`를 포함합니다.
-- C/C++는 `struct`, `union`, `enum`, `enum member`와 C++ `namespace`, `template` 내부 선언을 포함합니다.
+- 추출 대상 심볼은 `file`, `import`, `namespace`, `class`, `struct`, `interface`, `enum`, `enum_member`, `union`, `record`, `annotation`, `function`, `method`, `constructor`, `variable`, `type_alias`입니다.
+- 공통 메타데이터는 `qualified_name`, `signature`, `parameters`, `super_types`, `aliased_type`, `start_line`, `end_line`를 포함합니다.
+- Java는 `package`, `import/static import`, nested class, `extends/implements`, constructor parameter를 포함합니다.
+- C/C++는 `typedef`/`using` alias, function parameter와 C++ `namespace`, nested class/struct, inheritance, `using` declaration을 포함합니다.
 - Python은 데코레이터가 있는 클래스/함수와 비동기 함수까지 포함합니다.

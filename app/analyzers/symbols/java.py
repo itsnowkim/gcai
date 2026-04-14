@@ -11,18 +11,25 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
         package_name = self._package_name(root)
 
         for child in root.named_children:
-            if child.type == "class_declaration":
-                symbols.extend(self._extract_type(child, kind=SymbolKind.CLASS, scope=package_name))
-            elif child.type == "interface_declaration":
-                symbols.extend(self._extract_type(child, kind=SymbolKind.INTERFACE, scope=package_name))
-            elif child.type == "enum_declaration":
-                symbols.extend(self._extract_enum(child, scope=package_name))
-            elif child.type == "record_declaration":
-                symbols.extend(self._extract_type(child, kind=SymbolKind.RECORD, scope=package_name))
-            elif child.type == "annotation_type_declaration":
-                symbols.extend(self._extract_type(child, kind=SymbolKind.ANNOTATION, scope=package_name))
+            if child.type == "import_declaration":
+                symbols.append(self._build_import(child, package_name))
+            else:
+                symbols.extend(self._extract_declaration(child, scope=package_name))
 
         return symbols
+
+    def _extract_declaration(self, node: Node, *, scope: str | None) -> list[ExtractedSymbol]:
+        if node.type == "class_declaration":
+            return self._extract_type(node, kind=SymbolKind.CLASS, scope=scope)
+        if node.type == "interface_declaration":
+            return self._extract_type(node, kind=SymbolKind.INTERFACE, scope=scope)
+        if node.type == "enum_declaration":
+            return self._extract_enum(node, scope=scope)
+        if node.type == "record_declaration":
+            return self._extract_type(node, kind=SymbolKind.RECORD, scope=scope)
+        if node.type == "annotation_type_declaration":
+            return self._extract_type(node, kind=SymbolKind.ANNOTATION, scope=scope)
+        return []
 
     def _extract_type(self, node: Node, *, kind: SymbolKind, scope: str | None) -> list[ExtractedSymbol]:
         class_name = self._node_name(node.child_by_field_name("name")) or "<anonymous-type>"
@@ -38,6 +45,7 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
                 code=self._node_text(node),
                 body=self._node_text(body),
                 parent_name=scope,
+                super_types=self._type_super_types(node),
             )
         ]
 
@@ -55,6 +63,8 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
                 constructor_symbol = self._build_constructor(child, qualified_name, class_name)
                 symbols.append(constructor_symbol)
                 symbols.extend(self._extract_local_variables(child, qualified_name, constructor_name=class_name))
+            else:
+                symbols.extend(self._extract_declaration(child, scope=qualified_name))
 
         return symbols
 
@@ -72,6 +82,7 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
                 code=self._node_text(node),
                 body=self._node_text(body),
                 parent_name=scope,
+                super_types=self._type_super_types(node),
             )
         ]
         if body is None:
@@ -103,6 +114,8 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
                         constructor_symbol = self._build_constructor(member, qualified_name, enum_name)
                         symbols.append(constructor_symbol)
                         symbols.extend(self._extract_local_variables(member, qualified_name, constructor_name=enum_name))
+                    else:
+                        symbols.extend(self._extract_declaration(member, scope=qualified_name))
         return symbols
 
     def _build_method(self, node: Node, parent_name: str) -> ExtractedSymbol:
@@ -117,6 +130,7 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
             code=self._node_text(node),
             body=self._node_text(body),
             parent_name=parent_name,
+            parameters=self._formal_parameters(node.child_by_field_name("parameters")),
         )
 
     def _build_constructor(self, node: Node, parent_name: str, constructor_name: str) -> ExtractedSymbol:
@@ -130,6 +144,7 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
             code=self._node_text(node),
             body=self._node_text(body),
             parent_name=parent_name,
+            parameters=self._formal_parameters(node.child_by_field_name("parameters")),
         )
 
     def _method_signature(self, node: Node) -> str:
@@ -190,3 +205,46 @@ class JavaSymbolExtractor(BaseSymbolExtractor):
             return None
         name = next((child for child in package.named_children if child.type == "identifier" or child.type == "scoped_identifier"), None)
         return self._node_name(name)
+
+    def _build_import(self, node: Node, package_name: str | None) -> ExtractedSymbol:
+        scoped_identifier = next(
+            (child for child in node.named_children if child.type in {"identifier", "scoped_identifier", "asterisk"}),
+            None,
+        )
+        imported_name = self._node_name(scoped_identifier) or "<anonymous-import>"
+        is_static = any(child.type == "static" for child in node.children)
+        qualified_name = f"static:{imported_name}" if is_static else imported_name
+        return self._make_symbol(
+            kind=SymbolKind.IMPORT,
+            name=imported_name.split(".")[-1],
+            qualified_name=qualified_name,
+            signature=self._node_text(node).strip(),
+            node=node,
+            code=self._node_text(node),
+            body=None,
+            parent_name=package_name,
+            is_static=is_static,
+        )
+
+    def _formal_parameters(self, node: Node | None) -> list[str]:
+        if node is None:
+            return []
+        return [self._node_text(child).strip() for child in node.named_children if child.type == "formal_parameter"]
+
+    def _type_super_types(self, node: Node) -> list[str]:
+        super_types: list[str] = []
+        for child in node.named_children:
+            if child.type == "superclass":
+                super_types.extend(self._named_type_texts(child))
+            elif child.type in {"super_interfaces", "extends_interfaces"}:
+                super_types.extend(self._named_type_texts(child))
+        return super_types
+
+    def _named_type_texts(self, node: Node) -> list[str]:
+        names: list[str] = []
+        for child in self._walk(node):
+            if child.type in {"type_identifier", "generic_type", "scoped_type_identifier"}:
+                text = self._node_text(child).strip()
+                if text and text not in names:
+                    names.append(text)
+        return names

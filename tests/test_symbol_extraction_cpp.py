@@ -7,10 +7,16 @@ def test_cpp_symbol_extraction() -> None:
     parsed = parse_source_code(
         """
 namespace demo {
+using size_type = long;
+using std::string;
 template <typename T>
 struct Box {
 public:
     T value;
+
+    struct Inner {
+        int id;
+    };
 
     T get() {
         T copy = value;
@@ -43,8 +49,12 @@ int helper(int input) {
 
     assert (SymbolKind.FILE, "sample.cpp") in symbols
     assert (SymbolKind.NAMESPACE, "demo") in symbols
+    assert (SymbolKind.TYPE_ALIAS, "demo.size_type") in symbols
+    assert symbols[(SymbolKind.TYPE_ALIAS, "demo.size_type")].aliased_type == "long"
+    assert (SymbolKind.IMPORT, "std::string") in symbols
     assert (SymbolKind.STRUCT, "demo.Box") in symbols
     assert (SymbolKind.VARIABLE, "demo.Box.value") in symbols
+    assert (SymbolKind.STRUCT, "demo.Box.Inner") in symbols
     assert (SymbolKind.METHOD, "demo.Box.get") in symbols
     assert (SymbolKind.VARIABLE, "demo.Box.get.copy") in symbols
     assert (SymbolKind.ENUM, "demo.Color") in symbols
@@ -52,4 +62,28 @@ int helper(int input) {
     assert (SymbolKind.UNION, "demo.Value") in symbols
     assert (SymbolKind.VARIABLE, "demo.Value.number") in symbols
     assert (SymbolKind.FUNCTION, "demo.helper") in symbols
+    assert symbols[(SymbolKind.FUNCTION, "demo.helper")].parameters == ["int input"]
     assert (SymbolKind.VARIABLE, "demo.helper.local") in symbols
+
+
+def test_cpp_inheritance_metadata_is_extracted() -> None:
+    parsed = parse_source_code(
+        """
+class Base {};
+
+class Derived : public Base {
+public:
+    int run(int value) {
+        return value;
+    }
+};
+""".strip(),
+        "cpp",
+        path="inheritance.cpp",
+    )
+
+    result = extract_symbols(parsed)
+    symbols = {(symbol.kind, symbol.qualified_name): symbol for symbol in result.symbols}
+
+    assert symbols[(SymbolKind.CLASS, "Derived")].super_types == ["Base"]
+    assert symbols[(SymbolKind.METHOD, "Derived.run")].parameters == ["int value"]

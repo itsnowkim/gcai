@@ -32,14 +32,21 @@
 ### 1-2. 심볼 추출
 
 - [x] File 노드 추출 로직 구현
+- [x] Import 노드 추출 로직 구현
 - [x] Class 노드 추출 로직 구현
 - [x] Function 노드 추출 로직 구현
 - [x] Variable 노드 추출 로직 구현
+- [x] Type alias 노드 추출 로직 구현
 - [x] 각 노드의 공통 메타데이터 정의
 - [x] `id` 생성 규칙 정의
 - [x] `path`, `name`, `signature`, `start_line`, `end_line` 추출 규칙 구현
 - [x] 함수 본문 추출 로직 구현
 - [x] 클래스 메서드 추출 로직 구현
+- [x] nested scope 기반 `qualified_name` 추출 규칙 구현
+- [x] package / namespace / using / import 추출 규칙 구현
+- [x] 함수/메서드 parameter 메타데이터 추출 규칙 구현
+- [x] extends / implements / inheritance 메타데이터 추출 규칙 구현
+- [x] typedef / using alias 메타데이터 추출 규칙 구현
 - [x] 추출 결과를 공통 schema로 변환
 
 ### 1-3. 관계 추출

@@ -23,6 +23,7 @@
 - [x] 모듈 레벨 단순 대입 변수 추출
 - [x] 클래스 레벨 단순 대입 변수 추출
 - [x] 함수 내부 단순 대입 변수 추출
+- [x] 함수/메서드 parameter signature 추출
 
 ### 아직 미지원
 
@@ -51,17 +52,19 @@
 - [x] method 내부 local variable 추출
 - [x] constructor 내부 local variable 추출
 - [x] 메서드/생성자 본문 추출
+- [x] 중첩 class 선언의 계층형 추출
+- [x] `extends` / `implements` 메타데이터 추출
+- [x] import / static import 심볼 추출
+- [x] method / constructor parameter 메타데이터 추출
 
 ### 아직 미지원
 
-- [ ] 중첩 class/interface/enum/record 선언의 계층형 추출
+- [ ] 중첩 interface/enum/record 선언의 계층형 추출
 - [ ] generic type parameter 메타데이터 추출
-- [ ] `extends` / `implements` 관계 메타데이터 추출
 - [ ] annotation usage 추출
 - [ ] interface default/static method 구분
 - [ ] lambda / method reference 추출
 - [ ] try-with-resources, enhanced for, catch parameter 바인딩 변수 추출
-- [ ] import / static import 심볼 추출
 
 ## C
 
@@ -77,6 +80,8 @@
 - [x] union 선언
 - [x] union field 추출
 - [x] 함수 본문 추출
+- [x] 함수 parameter 메타데이터 추출
+- [x] `typedef` alias 추출
 
 ### 아직 미지원
 
@@ -85,7 +90,6 @@
 - [ ] 전처리기 조건부 분기별 선언 추출
 - [ ] anonymous struct/union/enum의 안정적 이름 정책
 - [ ] 복수 declarator가 한 declaration에 있는 경우의 정교한 signature 분리
-- [ ] typedef alias와 원본 타입의 관계 메타데이터 추출
 - [ ] parameter 심볼 추출
 
 ## C++
@@ -105,15 +109,18 @@
 - [x] union field 추출
 - [x] template declaration 내부의 선언 추출
 - [x] 함수/메서드 본문 추출
+- [x] nested class/struct 선언의 계층형 추출
+- [x] inheritance 메타데이터 추출
+- [x] typedef / using alias 추출
+- [x] using declaration 기반 import 심볼 추출
+- [x] 함수/메서드 parameter 메타데이터 추출
 
 ### 아직 미지원
 
 - [ ] nested namespace/class/struct의 더 정교한 scope 메타데이터
-- [ ] inheritance 메타데이터 추출
 - [ ] template parameter / specialization 메타데이터 추출
 - [ ] constructor / destructor / operator overload 분류
 - [ ] lambda / functor / concept / requires clause 추출
-- [ ] typedef / using alias 추출
 - [ ] macro 기반 선언 해석
 - [ ] parameter 심볼 추출
 

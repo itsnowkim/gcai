@@ -36,6 +36,7 @@ class CSymbolExtractor(BaseSymbolExtractor):
             code=self._node_text(node),
             body=self._node_text(body),
             parent_name=None,
+            parameters=self._parameter_texts(declarator),
         )
 
     def _extract_local_variables(self, node: Node, parent_name: str) -> list[ExtractedSymbol]:
@@ -100,10 +101,9 @@ class CSymbolExtractor(BaseSymbolExtractor):
         symbols = self._extract_aggregate(type_node, scope=None)
         alias_name = self._node_name(alias_node)
         if alias_name and type_node is not None:
-            kind = self._aggregate_kind(type_node)
             symbols.append(
                 self._make_symbol(
-                    kind=kind,
+                    kind=SymbolKind.TYPE_ALIAS,
                     name=alias_name,
                     qualified_name=alias_name,
                     signature=self._node_text(node).strip(),
@@ -111,6 +111,7 @@ class CSymbolExtractor(BaseSymbolExtractor):
                     code=self._node_text(node),
                     body=None,
                     parent_name=None,
+                    aliased_type=self._node_text(type_node).strip(),
                 )
             )
         return symbols
@@ -169,3 +170,19 @@ class CSymbolExtractor(BaseSymbolExtractor):
         body = node.child_by_field_name("body")
         end_byte = body.start_byte if body is not None else node.end_byte
         return self.source[node.start_byte:end_byte].decode("utf-8").strip()
+
+    def _parameter_texts(self, declarator: Node | None) -> list[str]:
+        if declarator is None:
+            return []
+        parameter_list = declarator.child_by_field_name("parameters")
+        if parameter_list is None:
+            for child in declarator.named_children:
+                parameters = self._parameter_texts(child)
+                if parameters:
+                    return parameters
+            return []
+        return [
+            self._node_text(child).strip()
+            for child in parameter_list.named_children
+            if child.type == "parameter_declaration"
+        ]
