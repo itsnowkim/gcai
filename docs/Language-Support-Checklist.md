@@ -136,6 +136,10 @@
 - [x] Java 심볼 추출
 - [x] C 심볼 추출
 - [x] C++ 심볼 추출
+- [x] `CONTAINS` 관계 추출
+- [x] `IMPORTS` 관계 추출
+- [x] `CALLS` 관계 추출
+- [ ] `READS` / `WRITES` 관계 추출
 
 관련 테스트 파일:
 
@@ -144,3 +148,4 @@
 - [tests/test_symbol_extraction_java.py](/Users/now/Dev/code-ai/gcai/tests/test_symbol_extraction_java.py:1)
 - [tests/test_symbol_extraction_c.py](/Users/now/Dev/code-ai/gcai/tests/test_symbol_extraction_c.py:1)
 - [tests/test_symbol_extraction_cpp.py](/Users/now/Dev/code-ai/gcai/tests/test_symbol_extraction_cpp.py:1)
+- [tests/test_relation_extraction.py](/Users/now/Dev/code-ai/gcai/tests/test_relation_extraction.py:1)
