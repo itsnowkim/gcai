@@ -31,7 +31,9 @@ class ExtractedSymbol(BaseModel):
     qualified_name: str
     signature: str
     start_line: int
+    start_column: int
     end_line: int
+    end_column: int
     code: str
     body: str | None = None
     parent_name: str | None = None

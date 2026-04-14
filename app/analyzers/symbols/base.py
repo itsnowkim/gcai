@@ -50,7 +50,9 @@ class BaseSymbolExtractor:
         is_static: bool = False,
     ) -> ExtractedSymbol:
         start_line = node.start_point[0] + 1
+        start_column = node.start_point[1] + 1
         end_line = node.end_point[0] + 1
+        end_column = node.end_point[1] + 1
         return ExtractedSymbol(
             id=self._symbol_id(kind, qualified_name, start_line),
             kind=kind,
@@ -60,7 +62,9 @@ class BaseSymbolExtractor:
             qualified_name=qualified_name,
             signature=signature,
             start_line=start_line,
+            start_column=start_column,
             end_line=end_line,
+            end_column=end_column,
             code=code,
             body=body,
             parent_name=parent_name,

@@ -139,7 +139,8 @@
 - [x] `CONTAINS` 관계 추출
 - [x] `IMPORTS` 관계 추출
 - [x] `CALLS` 관계 추출
-- [ ] `READS` / `WRITES` 관계 추출
+- [x] `READS` 관계 추출
+- [x] `WRITES` 관계 추출
 
 관련 테스트 파일:
 

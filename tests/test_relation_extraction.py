@@ -159,3 +159,93 @@ struct Box {
     assert (RelationKind.CALLS, "add", "helper") in c_relations
     assert (RelationKind.CALLS, "Box.run", "log") in cpp_relations
     assert (RelationKind.CALLS, "Box.run", "helper") in cpp_relations
+
+
+def test_python_reads_and_writes_relations_are_extracted() -> None:
+    parsed = parse_source_code(
+        """
+value = 1
+
+class Greeter:
+    prefix = "hi"
+
+    def greet(self, name):
+        message = self.prefix
+        total = helper(message)
+        return total
+""".strip(),
+        "python",
+        path="sample.py",
+    )
+
+    result = extract_relations(parsed)
+    relations = {(relation.kind, relation.source, relation.destination): relation for relation in result.relations}
+
+    assert (RelationKind.WRITES, "Greeter.greet", "Greeter.greet.message") in relations
+    assert (RelationKind.WRITES, "Greeter.greet", "Greeter.greet.total") in relations
+    assert (RelationKind.READS, "Greeter.greet", "Greeter.prefix") in relations
+    assert (RelationKind.READS, "Greeter.greet", "Greeter.greet.message") in relations
+    assert (RelationKind.READS, "Greeter.greet", "Greeter.greet.total") in relations
+
+
+def test_java_reads_and_writes_relations_are_extracted() -> None:
+    parsed = parse_source_code(
+        """
+class Service {
+    String prefix;
+    String count;
+
+    String greet(String name) {
+        String message = prefix;
+        count = helper(message);
+        return message;
+    }
+}
+""".strip(),
+        "java",
+        path="Service.java",
+    )
+
+    result = extract_relations(parsed)
+    relations = {(relation.kind, relation.source, relation.destination): relation for relation in result.relations}
+
+    assert (RelationKind.WRITES, "Service.greet", "Service.greet.message") in relations
+    assert (RelationKind.WRITES, "Service.greet", "Service.count") in relations
+    assert (RelationKind.READS, "Service.greet", "Service.prefix") in relations
+    assert (RelationKind.READS, "Service.greet", "Service.greet.message") in relations
+
+
+def test_c_and_cpp_reads_and_writes_relations_are_extracted() -> None:
+    c_parsed = parse_source_code(
+        "int count; int add(int a, int b) { int total = a + b; count = helper(total); return count; }",
+        "c",
+        path="sample.c",
+    )
+    cpp_parsed = parse_source_code(
+        """
+struct Box {
+    int value;
+    int run(int input) {
+        int total = value + input;
+        value = helper(total);
+        return value;
+    }
+};
+""".strip(),
+        "cpp",
+        path="sample.cpp",
+    )
+
+    c_result = extract_relations(c_parsed)
+    cpp_result = extract_relations(cpp_parsed)
+    c_relations = {(relation.kind, relation.source, relation.destination): relation for relation in c_result.relations}
+    cpp_relations = {(relation.kind, relation.source, relation.destination): relation for relation in cpp_result.relations}
+
+    assert (RelationKind.WRITES, "add", "add.total") in c_relations
+    assert (RelationKind.WRITES, "add", "count") in c_relations
+    assert (RelationKind.READS, "add", "add.total") in c_relations
+    assert (RelationKind.READS, "add", "count") in c_relations
+    assert (RelationKind.WRITES, "Box.run", "Box.run.total") in cpp_relations
+    assert (RelationKind.WRITES, "Box.run", "Box.value") in cpp_relations
+    assert (RelationKind.READS, "Box.run", "Box.value") in cpp_relations
+    assert (RelationKind.READS, "Box.run", "Box.run.total") in cpp_relations

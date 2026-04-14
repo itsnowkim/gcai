@@ -54,8 +54,8 @@
 - [x] `CONTAINS` 관계 추출 구현
 - [x] `IMPORTS` 관계 추출 구현
 - [x] `CALLS` 관계 추출 구현
-- [ ] `READS` 관계 추출 구현
-- [ ] `WRITES` 관계 추출 구현
+- [x] `READS` 관계 추출 구현
+- [x] `WRITES` 관계 추출 구현
 - [x] 관계별 source/destination 규칙 정의
 - [x] 관계 중복 제거 로직 구현
 - [x] 관계 추출 결과 schema 정의
