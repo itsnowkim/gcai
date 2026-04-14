@@ -27,3 +27,8 @@ class SourceFileReadError(GCAIError):
 class SourceParseError(GCAIError):
     def __init__(self, detail: str) -> None:
         super().__init__(message=detail, error_code="source_parse_error", status_code=400)
+
+
+class DiffParseError(GCAIError):
+    def __init__(self, detail: str) -> None:
+        super().__init__(message=detail, error_code="diff_parse_error", status_code=400)

@@ -1,5 +1,6 @@
 """Parser package."""
 
+from app.parsers.git_diff import parse_git_diff
 from app.parsers.files import read_source_file
 from app.parsers.languages import (
     SUPPORTED_LANGUAGE_NAMES,
@@ -14,6 +15,7 @@ __all__ = [
     "format_tree_for_debug",
     "get_language_for_path",
     "get_parser_for_language",
+    "parse_git_diff",
     "parse_file",
     "parse_source_code",
     "read_source_file",
