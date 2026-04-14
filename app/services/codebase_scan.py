@@ -1,11 +1,9 @@
 from pathlib import Path
 
-from app.analyzers.relations import extract_relations
-from app.analyzers.symbols import extract_symbols
 from app.parsers.exceptions import SourceParseError, UnsupportedLanguageError
 from app.parsers.languages import get_language_for_path
-from app.parsers.tree_sitter import parse_file
 from app.schemas.scan import CodebaseScanResult, ScannedFile, SkippedFile
+from app.services.source_analysis import analyze_source_file
 
 DEFAULT_EXCLUDED_DIRECTORIES: tuple[str, ...] = (
     ".git",
@@ -49,9 +47,7 @@ def scan_codebase(
             continue
 
         try:
-            parsed_source = parse_file(path)
-            symbol_result = extract_symbols(parsed_source)
-            relation_result = extract_relations(parsed_source)
+            analysis = analyze_source_file(path, include_relations=True)
         except SourceParseError:
             skipped_files.append(SkippedFile(path=relative_path, reason="parse_error"))
             continue
@@ -59,9 +55,9 @@ def scan_codebase(
         scanned_files.append(
             ScannedFile(
                 path=relative_path,
-                language=language,
-                symbols=symbol_result.symbols,
-                relations=relation_result.relations,
+                language=analysis.language,
+                symbols=analysis.symbol_result.symbols,
+                relations=analysis.relation_result.relations if analysis.relation_result is not None else [],
             )
         )
 

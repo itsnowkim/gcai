@@ -1,3 +1,4 @@
+from app.schemas.changed_code import ChangedCodeContextResult, ChangedFileContext, ChangedSymbolSeed
 from app.schemas.diff import ChangeType, DiffHunk, DiffLineRange, ParsedDiffFile, ParsedDiffResult
 from app.schemas.indexing import InitialIndexResult
 from app.schemas.relations import ExtractedRelation, RelationExtractionResult, RelationKind
@@ -7,6 +8,9 @@ from app.schemas.symbols import ExtractedSymbol, SymbolExtractionResult, SymbolK
 __all__ = [
     "CodebaseScanResult",
     "ChangeType",
+    "ChangedCodeContextResult",
+    "ChangedFileContext",
+    "ChangedSymbolSeed",
     "DiffHunk",
     "DiffLineRange",
     "ExtractedRelation",
