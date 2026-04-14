@@ -58,6 +58,15 @@ docker-compose up --build
 
 ## Phase 1-1 범위
 
-- 초기 지원 언어 범위는 `Python`, `JavaScript`, `TypeScript`, `TSX`입니다.
+- 초기 지원 언어 범위는 `Python`, `Java`, `C`, `C++`입니다.
 - 파일 확장자 기준으로 Tree-sitter 언어를 선택합니다.
 - 단일 파일 파싱은 문법 오류를 기본적으로 실패로 처리합니다.
+
+## Phase 1-2 범위
+
+- 심볼 추출은 공통 스키마와 언어별 모듈로 분리되어 있습니다.
+- 언어별 extractor는 `app/analyzers/symbols/python.py`, `java.py`, `c.py`, `cpp.py`에 위치합니다.
+- 추출 대상 심볼은 `file`, `namespace`, `class`, `struct`, `interface`, `enum`, `enum_member`, `union`, `record`, `annotation`, `function`, `method`, `constructor`, `variable`입니다.
+- Java는 `class`, `interface`, `enum`, `record`, `annotation`, `constructor`를 포함합니다.
+- C/C++는 `struct`, `union`, `enum`, `enum member`와 C++ `namespace`, `template` 내부 선언을 포함합니다.
+- Python은 데코레이터가 있는 클래스/함수와 비동기 함수까지 포함합니다.

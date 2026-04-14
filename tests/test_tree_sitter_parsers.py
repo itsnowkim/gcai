@@ -9,14 +9,21 @@ from app.parsers.tree_sitter import format_tree_for_debug, parse_file, parse_sou
 
 
 def test_supported_language_scope_is_defined() -> None:
-    assert SUPPORTED_LANGUAGE_NAMES == ("python", "javascript", "typescript", "tsx")
+    assert SUPPORTED_LANGUAGE_NAMES == ("python", "java", "c", "cpp")
 
 
-def test_language_is_resolved_from_extension() -> None:
-    assert get_language_for_path("example.py") == "python"
-    assert get_language_for_path("example.js") == "javascript"
-    assert get_language_for_path("example.ts") == "typescript"
-    assert get_language_for_path("example.tsx") == "tsx"
+@pytest.mark.parametrize(
+    ("path", "language"),
+    [
+        ("example.py", "python"),
+        ("Example.java", "java"),
+        ("example.c", "c"),
+        ("example.cpp", "cpp"),
+        ("example.hh", "cpp"),
+    ],
+)
+def test_language_is_resolved_from_extension(path: str, language: str) -> None:
+    assert get_language_for_path(path) == language
 
 
 def test_unsupported_extension_raises_error() -> None:
@@ -36,14 +43,20 @@ def test_read_source_file_raises_for_missing_file(tmp_path: Path) -> None:
         read_source_file(tmp_path / "missing.py")
 
 
-def test_parse_source_code_returns_tree() -> None:
-    parsed = parse_source_code(
-        "def greet(name: str) -> str:\n    return f'hello {name}'\n",
-        "python",
-    )
+@pytest.mark.parametrize(
+    ("language", "source_code", "root_type"),
+    [
+        ("python", "def greet(name):\n    return name\n", "module"),
+        ("java", "class Greeter { String greet(String name) { return name; } }", "program"),
+        ("c", "int add(int a, int b) { return a + b; }", "translation_unit"),
+        ("cpp", "class Greeter { public: int greet(int value) { return value; } };", "translation_unit"),
+    ],
+)
+def test_parse_source_code_returns_tree(language: str, source_code: str, root_type: str) -> None:
+    parsed = parse_source_code(source_code, language)
 
-    assert parsed.language == "python"
-    assert parsed.tree.root_node.type == "module"
+    assert parsed.language == language
+    assert parsed.tree.root_node.type == root_type
 
 
 def test_parse_file_reads_and_parses_python(tmp_path: Path) -> None:

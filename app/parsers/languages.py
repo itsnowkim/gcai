@@ -2,28 +2,33 @@ from functools import lru_cache
 from pathlib import Path
 
 from tree_sitter import Language, Parser
-import tree_sitter_javascript
+import tree_sitter_c
+import tree_sitter_cpp
+import tree_sitter_java
 import tree_sitter_python
-import tree_sitter_typescript
 
 from app.parsers.exceptions import ParserConfigurationError, UnsupportedLanguageError
 
 EXTENSION_LANGUAGE_MAP: dict[str, str] = {
     ".py": "python",
-    ".js": "javascript",
-    ".mjs": "javascript",
-    ".cjs": "javascript",
-    ".ts": "typescript",
-    ".tsx": "tsx",
+    ".java": "java",
+    ".c": "c",
+    ".cc": "cpp",
+    ".cpp": "cpp",
+    ".cxx": "cpp",
+    ".hpp": "cpp",
+    ".hh": "cpp",
+    ".hxx": "cpp",
+    ".h": "c",
 }
 
-SUPPORTED_LANGUAGE_NAMES: tuple[str, ...] = ("python", "javascript", "typescript", "tsx")
+SUPPORTED_LANGUAGE_NAMES: tuple[str, ...] = ("python", "java", "c", "cpp")
 
 LANGUAGE_BINDINGS: dict[str, object] = {
     "python": tree_sitter_python.language,
-    "javascript": tree_sitter_javascript.language,
-    "typescript": tree_sitter_typescript.language_typescript,
-    "tsx": tree_sitter_typescript.language_tsx,
+    "java": tree_sitter_java.language,
+    "c": tree_sitter_c.language,
+    "cpp": tree_sitter_cpp.language,
 }
 
 
