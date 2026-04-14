@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from app.schemas.indexing import InitialIndexResult
+from app.schemas.indexing import InitialIndexResult, InitialIndexVerificationResult
 from app.schemas.scan import CodebaseScanResult
 from app.services.indexing import run_initial_index
 
@@ -18,6 +18,14 @@ def test_run_initial_index_orchestrates_scan_and_ingest() -> None:
             "app.services.indexing.ingest_scan_result_to_chroma",
             return_value={"upserted_documents": 4},
         ) as chroma_mock,
+        patch(
+            "app.services.indexing.verify_initial_index_storage",
+            return_value=InitialIndexVerificationResult(
+                verified_nodes=10,
+                verified_edges=20,
+                verified_documents=4,
+            ),
+        ) as verify_mock,
     ):
         result = run_initial_index("/tmp/repo")
 
@@ -28,7 +36,16 @@ def test_run_initial_index_orchestrates_scan_and_ingest() -> None:
         upserted_nodes=10,
         upserted_edges=20,
         upserted_documents=4,
+        verified_nodes=10,
+        verified_edges=20,
+        verified_documents=4,
     )
     scan_mock.assert_called_once_with("/tmp/repo")
     neo4j_mock.assert_called_once_with(scan_result)
     chroma_mock.assert_called_once_with(scan_result)
+    verify_mock.assert_called_once_with(
+        scan_result,
+        expected_nodes=10,
+        expected_edges=20,
+        expected_documents=4,
+    )

@@ -11,20 +11,25 @@ logger = get_logger(__name__)
 def ingest_scan_result_to_chroma(scan_result: CodebaseScanResult) -> dict[str, int]:
     settings = get_settings()
     client = create_chroma_client(settings)
-    verify_chroma_connectivity(client)
+    try:
+        verify_chroma_connectivity(client)
 
-    writer = ChromaDocumentWriter(client, collection_prefix=settings.chroma_collection_prefix)
-    documents_by_language = build_chroma_documents(scan_result)
+        writer = ChromaDocumentWriter(client, collection_prefix=settings.chroma_collection_prefix)
+        documents_by_language = build_chroma_documents(scan_result)
 
-    upserted_documents = 0
-    for language, rows in documents_by_language.items():
-        upserted_documents += writer.upsert_documents(language=language, rows=rows)
+        upserted_documents = 0
+        for language, rows in documents_by_language.items():
+            upserted_documents += writer.upsert_documents(language=language, rows=rows)
 
-    logger.info(
-        "chroma_ingest_completed",
-        extra={
-            "upserted_documents": upserted_documents,
-            "repo_path": scan_result.repo_path,
-        },
-    )
-    return {"upserted_documents": upserted_documents}
+        logger.info(
+            "chroma_ingest_completed",
+            extra={
+                "upserted_documents": upserted_documents,
+                "repo_path": scan_result.repo_path,
+            },
+        )
+        return {"upserted_documents": upserted_documents}
+    finally:
+        close_client = getattr(client, "close", None)
+        if callable(close_client):
+            close_client()
