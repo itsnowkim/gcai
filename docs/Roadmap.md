@@ -4,18 +4,18 @@
 
 ## Phase 0. 프로젝트 초기 세팅
 
-- [ ] Python 프로젝트 기본 디렉토리 구조 생성
-- [ ] `app/api`, `app/schemas`, `app/services`, `app/storage`, `app/parsers`, `app/analyzers` 디렉토리 생성
-- [ ] Python 패키지 초기화 파일(`__init__.py`) 추가
-- [ ] 의존성 관리 파일 작성
-- [ ] FastAPI, Neo4j client, ChromaDB client, Tree-sitter 관련 라이브러리 선정
-- [ ] 개발용 실행 방법 정의
-- [ ] 환경 변수 목록 정리
-- [ ] `.env.example` 작성
-- [ ] 기본 설정 로더 작성
-- [ ] 로깅 설정 작성
-- [ ] 예외 처리 기본 구조 작성
-- [ ] request id 생성 방식 정의
+- [x] Python 프로젝트 기본 디렉토리 구조 생성
+- [x] `app/api`, `app/schemas`, `app/services`, `app/storage`, `app/parsers`, `app/analyzers` 디렉토리 생성
+- [x] Python 패키지 초기화 파일(`__init__.py`) 추가
+- [x] 의존성 관리 파일 작성
+- [x] FastAPI, Neo4j client, ChromaDB client, Tree-sitter 관련 라이브러리 선정
+- [x] 개발용 실행 방법 정의
+- [x] 환경 변수 목록 정리
+- [x] `.env.example` 작성
+- [x] 기본 설정 로더 작성
+- [x] 로깅 설정 작성
+- [x] 예외 처리 기본 구조 작성
+- [x] request id 생성 방식 정의
 
 ## Phase 1. 코드 지식 그래프 추출
 
