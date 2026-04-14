@@ -93,3 +93,40 @@ RETURN
     [node IN raw_nodes WHERE node IS NOT NULL] AS nodes,
     [edge IN raw_edges WHERE edge IS NOT NULL] AS edges
 """.strip()
+
+
+GET_SEED_NODES_QUERY = """
+MATCH (seed:Symbol)
+WHERE seed.id IN $seed_ids
+RETURN {
+    id: seed.id,
+    path: seed.path,
+    kind: seed.kind,
+    qualified_name: seed.qualified_name
+} AS seed
+ORDER BY seed.qualified_name, seed.id
+""".strip()
+
+
+def build_graph_paths_query(max_depth: int) -> str:
+    if max_depth < 1:
+        raise ValueError(f"max_depth must be at least 1: {max_depth}")
+    if max_depth > 2:
+        raise ValueError(f"max_depth must be at most 2 for phase 2-3: {max_depth}")
+
+    return f"""
+MATCH (seed:Symbol)
+WHERE seed.id IN $seed_ids
+OPTIONAL MATCH path = (seed)-[rels:RELATES_TO*1..{max_depth}]-(neighbor:Symbol)
+WHERE neighbor.id <> seed.id
+  AND ALL(rel IN rels WHERE rel.kind IN $allowed_relation_kinds)
+WITH seed, neighbor, path
+ORDER BY
+    seed.id,
+    neighbor.id,
+    length(path) ASC,
+    [rel IN relationships(path) | rel.id] ASC
+WITH seed, neighbor, collect(path)[0] AS best_path
+WHERE best_path IS NOT NULL
+RETURN seed.id AS seed_id, best_path AS path
+""".strip()

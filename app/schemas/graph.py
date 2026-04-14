@@ -32,7 +32,22 @@ class GraphEdge(BaseModel):
     destination: str
 
 
-class OneHopGraphResult(BaseModel):
+class GraphPath(BaseModel):
+    seed_id: str
+    terminal_node_id: str
+    node_ids: list[str] = Field(default_factory=list)
+    edge_ids: list[str] = Field(default_factory=list)
+    hop_count: int
+
+
+class GraphExploreResult(BaseModel):
     seeds: list[SeedNode] = Field(default_factory=list)
     nodes: list[GraphNode] = Field(default_factory=list)
     edges: list[GraphEdge] = Field(default_factory=list)
+    graph_paths: list[GraphPath] = Field(default_factory=list)
+    max_depth: int = 1
+    allowed_relation_kinds: list[RelationKind] = Field(default_factory=list)
+
+
+class OneHopGraphResult(GraphExploreResult):
+    pass
