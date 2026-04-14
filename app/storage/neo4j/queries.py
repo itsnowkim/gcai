@@ -39,3 +39,57 @@ SET r.kind = row.kind,
     r.metadata_json = row.metadata_json
 RETURN count(r) AS upserted_count
 """.strip()
+
+GET_ONE_HOP_NEIGHBORS_QUERY = """
+MATCH (seed:Symbol)
+WHERE seed.id IN $seed_ids
+OPTIONAL MATCH (seed)-[r:RELATES_TO]-(neighbor:Symbol)
+WITH
+    collect(DISTINCT {
+        id: seed.id,
+        path: seed.path,
+        kind: seed.kind,
+        qualified_name: seed.qualified_name
+    }) AS seeds,
+    collect(DISTINCT {
+        id: seed.id,
+        kind: seed.kind,
+        language: seed.language,
+        path: seed.path,
+        name: seed.name,
+        qualified_name: seed.qualified_name,
+        signature: seed.signature,
+        start_line: seed.start_line,
+        end_line: seed.end_line
+    }) +
+    collect(DISTINCT CASE
+        WHEN neighbor IS NULL THEN NULL
+        ELSE {
+            id: neighbor.id,
+            kind: neighbor.kind,
+            language: neighbor.language,
+            path: neighbor.path,
+            name: neighbor.name,
+            qualified_name: neighbor.qualified_name,
+            signature: neighbor.signature,
+            start_line: neighbor.start_line,
+            end_line: neighbor.end_line
+        }
+    END) AS raw_nodes,
+    collect(DISTINCT CASE
+        WHEN r IS NULL THEN NULL
+        ELSE {
+            id: r.id,
+            kind: r.kind,
+            source_id: startNode(r).id,
+            destination_id: endNode(r).id,
+            path: r.path,
+            source: r.source,
+            destination: r.destination
+        }
+    END) AS raw_edges
+RETURN
+    seeds,
+    [node IN raw_nodes WHERE node IS NOT NULL] AS nodes,
+    [edge IN raw_edges WHERE edge IS NOT NULL] AS edges
+""".strip()
