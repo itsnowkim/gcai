@@ -71,3 +71,11 @@ docker-compose up --build
 - Java는 `package`, `import/static import`, nested class, `extends/implements`, constructor parameter를 포함합니다.
 - C/C++는 `typedef`/`using` alias, function parameter와 C++ `namespace`, nested class/struct, inheritance, `using` declaration을 포함합니다.
 - Python은 데코레이터가 있는 클래스/함수와 비동기 함수까지 포함합니다.
+
+## Phase 1-4 범위
+
+- `app/services/codebase_scan.py`의 `scan_codebase(...)`가 `repo_path` 전체를 순회합니다.
+- 지원 확장자만 분석 대상으로 삼고, 미지원 파일은 `unsupported_language`로 스킵합니다.
+- 기본 제외 디렉토리는 `.git`, `.venv`, `node_modules`, `dist`, `build`, `__pycache__` 등을 포함합니다.
+- 기본 대용량 파일 제외 기준은 `512 KiB`입니다.
+- 스캔 결과는 파일별 `symbols`, `relations`, 스킵 사유를 함께 반환합니다.
