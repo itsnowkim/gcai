@@ -26,6 +26,13 @@ dist/
 .env
 .env.local
 
+# Local tooling artifacts (workspace-specific)
+.tmp/
+.home/
+.cache/
+.deps/
+pytest-cache-files-*/
+
 # IDE and OS files
 .DS_Store
 .idea/

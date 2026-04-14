@@ -36,7 +36,7 @@ def scan_codebase(
     skipped_files: list[SkippedFile] = []
 
     for path in _iter_candidate_files(root, excluded_directories=excluded_directories):
-        relative_path = str(path.relative_to(root))
+        relative_path = path.relative_to(root).as_posix()
         try:
             language = get_language_for_path(path)
         except UnsupportedLanguageError:

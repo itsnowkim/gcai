@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     neo4j_uri: str = Field(default="bolt://localhost:7687", alias="NEO4J_URI")
     neo4j_username: str = Field(default="neo4j", alias="NEO4J_USERNAME")
-    neo4j_password: str = Field(default="neo4j", alias="NEO4J_PASSWORD")
+    neo4j_password: str = Field(default="neo4jpass123", alias="NEO4J_PASSWORD")
     neo4j_database: str = Field(default="neo4j", alias="NEO4J_DATABASE")
 
     chroma_host: str = Field(default="localhost", alias="CHROMA_HOST")
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     chroma_collection_prefix: str = Field(default="gcai", alias="CHROMA_COLLECTION_PREFIX")
 
     tree_sitter_languages: str = Field(
-        default="python,javascript,typescript",
+        default="python,java,c,cpp",
         alias="TREE_SITTER_LANGUAGES",
     )
 

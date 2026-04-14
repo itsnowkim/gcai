@@ -33,7 +33,7 @@ def test_unsupported_extension_raises_error() -> None:
 
 def test_read_source_file_returns_bytes(tmp_path: Path) -> None:
     source_path = tmp_path / "sample.py"
-    source_path.write_text("print('hello')\n", encoding="utf-8")
+    source_path.write_bytes(b"print('hello')\n")
 
     assert read_source_file(source_path) == b"print('hello')\n"
 
