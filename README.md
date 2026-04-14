@@ -87,3 +87,11 @@ docker-compose up --build
 - `app/storage/neo4j/writer.py`는 `UNWIND` 기반 배치 upsert를 수행합니다.
 - 노드와 엣지는 `MERGE` 기반으로 upsert되며, 재적재 시 `id`를 기준으로 갱신됩니다.
 - `app/services/graph_ingest.py`의 `ingest_scan_result_to_neo4j(...)`가 스캔 결과 전체를 적재하고 통계를 반환합니다.
+
+## Phase 1-6 범위
+
+- `app/storage/chroma/client.py`가 `HttpClient` 생성과 연결 확인을 담당합니다.
+- 컬렉션은 언어별 callable implementation 단위로 분리되며 이름 규칙은 `prefix-language-code-impl`입니다.
+- 문서 ID는 `symbol.id`를 그대로 사용해 재색인 시 안정적으로 upsert합니다.
+- 문서 본문은 `signature + body` 형식으로 구성하고, metadata에는 `qualified_name`, `path`, `symbol_kind`, 라인 정보 등을 포함합니다.
+- `app/storage/chroma/writer.py`는 배치 `upsert`를 수행하고, `app/services/chroma_ingest.py`의 `ingest_scan_result_to_chroma(...)`가 전체 적재를 오케스트레이션합니다.
