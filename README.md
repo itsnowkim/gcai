@@ -53,5 +53,11 @@ docker-compose up --build
 - API 서버 프레임워크는 `FastAPI`를 사용합니다.
 - 그래프 저장소 클라이언트는 `neo4j` Python driver를 사용합니다.
 - 벡터 저장소 클라이언트는 `chromadb`를 사용합니다.
-- Tree-sitter 언어 로딩은 `tree-sitter-language-pack`을 우선 사용합니다.
+- Tree-sitter 언어 로딩은 공식 언어별 패키지(`tree-sitter-python`, `tree-sitter-javascript`, `tree-sitter-typescript`)를 사용합니다.
 - 요청 ID는 `X-Request-ID` 헤더를 우선 재사용하고, 없으면 `req-<hex>` 형식으로 생성합니다.
+
+## Phase 1-1 범위
+
+- 초기 지원 언어 범위는 `Python`, `JavaScript`, `TypeScript`, `TSX`입니다.
+- 파일 확장자 기준으로 Tree-sitter 언어를 선택합니다.
+- 단일 파일 파싱은 문법 오류를 기본적으로 실패로 처리합니다.
