@@ -272,32 +272,32 @@
 
 ### 5-1. 애플리케이션 컨테이너
 
-- [ ] `Dockerfile` 작성
-- [ ] Python 런타임 이미지 선정
-- [ ] 애플리케이션 실행 커맨드 정의
-- [ ] 환경 변수 주입 방식 정의
+- [x] `Dockerfile` 작성
+- [x] Python 런타임 이미지 선정
+- [x] 애플리케이션 실행 커맨드 정의
+- [x] 환경 변수 주입 방식 정의
 
 ### 5-2. 로컬 통합 실행
 
-- [ ] `docker-compose.yml` 작성
-- [ ] FastAPI 서비스 정의
-- [ ] Neo4j 서비스 정의
-- [ ] ChromaDB 서비스 정의
-- [ ] 서비스 간 연결 설정
-- [ ] 볼륨 마운트 설정
+- [x] `docker-compose.yml` 작성
+- [x] FastAPI 서비스 정의
+- [x] Neo4j 서비스 정의
+- [x] ChromaDB 서비스 정의
+- [x] 서비스 간 연결 설정
+- [x] 볼륨 마운트 설정
 
 ### 5-3. 실행 검증
 
-- [ ] docker compose로 전체 기동 확인
-- [ ] API 서버 접속 확인
-- [ ] Neo4j 연결 확인
-- [ ] ChromaDB 연결 확인
-- [ ] context-package API end-to-end 검증
-- [ ] incremental-update API end-to-end 검증
+- [x] docker compose로 전체 기동 확인
+- [x] API 서버 접속 확인
+- [x] Neo4j 연결 확인
+- [x] ChromaDB 연결 확인
+- [x] context-package API end-to-end 검증
+- [x] incremental-update API end-to-end 검증
 
 ### Phase 5 완료 기준
 
-- [ ] Docker 환경에서 전체 시스템 실행 가능
+- [x] Docker 환경에서 전체 시스템 실행 가능
 
 ## 최종 완료 기준
 

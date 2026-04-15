@@ -17,6 +17,12 @@ py -3.13 -m pip install -e ".[dev]"
 Copy-Item .env.example .env
 ```
 
+Docker/Compose setup:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+```
+
 ## Run the API
 
 ```powershell
@@ -31,16 +37,29 @@ curl http://localhost:8000/health
 
 ## Docker stack
 
+Prepare environment files:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item .env.docker.example .env.docker
+```
+
+Render the resolved compose config:
+
+```powershell
+docker compose --env-file .env.docker config
+```
+
 Start Neo4j and ChromaDB:
 
 ```powershell
-docker compose up -d neo4j chroma
+docker compose --env-file .env.docker up -d neo4j chroma
 ```
 
 Run the full app stack:
 
 ```powershell
-docker compose up --build
+docker compose --env-file .env.docker up --build
 ```
 
 Default ports:
@@ -49,6 +68,26 @@ Default ports:
 - Neo4j HTTP: 7474
 - Neo4j Bolt: 7687
 - ChromaDB: 8001
+
+API smoke tests:
+
+```powershell
+curl http://localhost:8000/health
+```
+
+```powershell
+curl -X POST http://localhost:8000/analyze/context-package `
+  -H "Content-Type: application/json" `
+  -d "{\"repo_path\": \"/workspace\", \"diff\": \"diff --git a/app/main.py b/app/main.py\"}"
+```
+
+```powershell
+curl -X POST http://localhost:8000/graph/incremental-update `
+  -H "Content-Type: application/json" `
+  -d "{\"repo_path\": \"/workspace\", \"diff\": \"diff --git a/app/main.py b/app/main.py\"}"
+```
+
+The incremental update endpoint is currently a placeholder and is expected to return `501` until phase 3 is implemented.
 
 ## Initial indexing
 

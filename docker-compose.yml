@@ -1,22 +1,22 @@
 services:
   gcai:
+    image: "${GCAI_APP_IMAGE_NAME:-gcai:local}"
     build:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env.example
+      - .env
     environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
       NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USERNAME: neo4j
-      NEO4J_PASSWORD: neo4jpass123
-      NEO4J_DATABASE: neo4j
       CHROMA_HOST: chroma
       CHROMA_PORT: 8000
     ports:
-      - "${GCAI_APP_PORT:-8000}:8000"
+      - "${GCAI_API_HOST_PORT:-8000}:8000"
     volumes:
       - ./:/workspace:ro
-      - gcai-chroma-cache:/root/.cache/chroma
+      - app-cache:/root/.cache
     depends_on:
       neo4j:
         condition: service_healthy
@@ -24,45 +24,54 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health').read()"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      interval: "${GCAI_HEALTHCHECK_INTERVAL:-10s}"
+      timeout: "${GCAI_HEALTHCHECK_TIMEOUT:-5s}"
+      retries: ${GCAI_HEALTHCHECK_RETRIES:-5}
+      start_period: "${GCAI_HEALTHCHECK_START_PERIOD:-10s}"
 
   neo4j:
-    image: neo4j:5-community
+    image: "${GCAI_NEO4J_IMAGE:-neo4j:5-community}"
     environment:
       NEO4J_AUTH: neo4j/neo4jpass123
     ports:
-      - "${GCAI_NEO4J_HTTP_PORT:-7474}:7474"
-      - "${GCAI_NEO4J_BOLT_PORT:-7687}:7687"
+      - "${GCAI_NEO4J_HTTP_HOST_PORT:-7474}:7474"
+      - "${GCAI_NEO4J_BOLT_HOST_PORT:-7687}:7687"
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
       - neo4j-plugins:/plugins
     healthcheck:
       test: ["CMD-SHELL", "cypher-shell -u neo4j -p neo4jpass123 'RETURN 1;' || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 20s
+      interval: "${GCAI_HEALTHCHECK_INTERVAL:-10s}"
+      timeout: "${GCAI_HEALTHCHECK_TIMEOUT:-5s}"
+      retries: ${GCAI_HEALTHCHECK_RETRIES:-5}
+      start_period: "${GCAI_HEALTHCHECK_START_PERIOD:-10s}"
 
   chroma:
-    image: chromadb/chroma:1.5.3
+    image: "${GCAI_CHROMA_IMAGE:-chromadb/chroma:1.5.3}"
     ports:
-      - "${GCAI_CHROMA_PORT:-8001}:8000"
+      - "${GCAI_CHROMA_HOST_PORT:-8001}:8000"
     volumes:
       - chroma-data:/data
     healthcheck:
       test: ["CMD-SHELL", "bash -lc '</dev/tcp/127.0.0.1/8000'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      interval: "${GCAI_HEALTHCHECK_INTERVAL:-10s}"
+      timeout: "${GCAI_HEALTHCHECK_TIMEOUT:-5s}"
+      retries: ${GCAI_HEALTHCHECK_RETRIES:-5}
+      start_period: "${GCAI_HEALTHCHECK_START_PERIOD:-10s}"
+
+networks:
+  default:
+    name: "${GCAI_DOCKER_NETWORK_NAME:-gcai-network}"
 
 volumes:
-  gcai-chroma-cache:
   neo4j-data:
+    name: "${GCAI_NEO4J_DATA_VOLUME:-gcai-neo4j-data}"
   neo4j-logs:
+    name: "${GCAI_NEO4J_LOGS_VOLUME:-gcai-neo4j-logs}"
   neo4j-plugins:
+    name: "${GCAI_NEO4J_PLUGINS_VOLUME:-gcai-neo4j-plugins}"
   chroma-data:
+    name: "${GCAI_CHROMA_DATA_VOLUME:-gcai-chroma-data}"
+  app-cache:
+    name: "${GCAI_PIP_CACHE_VOLUME:-gcai-app-cache}"

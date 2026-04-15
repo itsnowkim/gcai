@@ -25,6 +25,8 @@ dist/
 # Local environment files
 .env
 .env.local
+.env.docker
+.env.docker.local
 
 # Local tooling artifacts (workspace-specific)
 .tmp/
