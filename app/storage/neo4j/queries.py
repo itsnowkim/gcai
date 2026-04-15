@@ -40,6 +40,29 @@ SET r.kind = row.kind,
 RETURN count(r) AS upserted_count
 """.strip()
 
+GET_SYMBOL_IDS_BY_PATHS_QUERY = """
+MATCH (symbol:Symbol)
+WHERE symbol.path IN $paths
+RETURN symbol.path AS path, symbol.id AS symbol_id
+ORDER BY symbol.path, symbol.id
+""".strip()
+
+DELETE_RELATIONS_BY_PATHS_QUERY = """
+MATCH ()-[r:RELATES_TO]->()
+WHERE r.path IN $paths
+WITH collect(r) AS relationships
+FOREACH (rel IN relationships | DELETE rel)
+RETURN size(relationships) AS deleted_count
+""".strip()
+
+DELETE_SYMBOLS_BY_PATHS_QUERY = """
+MATCH (symbol:Symbol)
+WHERE symbol.path IN $paths
+WITH collect(symbol) AS symbols
+FOREACH (node IN symbols | DETACH DELETE node)
+RETURN size(symbols) AS deleted_count
+""".strip()
+
 GET_ONE_HOP_NEIGHBORS_QUERY = """
 MATCH (seed:Symbol)
 WHERE seed.id IN $seed_ids

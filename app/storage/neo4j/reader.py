@@ -3,7 +3,7 @@ from neo4j import Driver
 from app.schemas.graph import GraphEdge, GraphExploreResult, GraphNode, GraphPath, OneHopGraphResult, SeedNode
 from app.schemas.relations import RelationKind
 from app.storage.neo4j.exceptions import Neo4jStorageError
-from app.storage.neo4j.queries import GET_SEED_NODES_QUERY, build_graph_paths_query
+from app.storage.neo4j.queries import GET_SEED_NODES_QUERY, GET_SYMBOL_IDS_BY_PATHS_QUERY, build_graph_paths_query
 
 
 class Neo4jGraphReader:
@@ -18,6 +18,24 @@ class Neo4jGraphReader:
             allowed_relation_kinds=[kind.value for kind in RelationKind],
         )
         return OneHopGraphResult.model_validate(result.model_dump())
+
+    def get_symbol_ids_by_paths(self, paths: list[str]) -> dict[str, list[str]]:
+        if not paths:
+            return {}
+
+        try:
+            with self.driver.session(database=self.database) as session:
+                records = session.execute_read(_run_symbol_ids_by_paths_query, paths)
+        except Exception as exc:  # pragma: no cover - external database failure path
+            raise Neo4jStorageError(
+                f"Failed to read graph data from Neo4j: {exc}",
+                error_code="neo4j_read_error",
+            ) from exc
+
+        symbol_ids_by_path: dict[str, list[str]] = {path: [] for path in paths}
+        for record in records:
+            symbol_ids_by_path.setdefault(record["path"], []).append(record["symbol_id"])
+        return symbol_ids_by_path
 
     def get_neighbors(
         self,
@@ -102,6 +120,10 @@ class Neo4jGraphReader:
 
 def _run_seed_query(tx, seed_ids: list[str]):
     return list(tx.run(GET_SEED_NODES_QUERY, seed_ids=seed_ids))
+
+
+def _run_symbol_ids_by_paths_query(tx, paths: list[str]):
+    return list(tx.run(GET_SYMBOL_IDS_BY_PATHS_QUERY, paths=paths))
 
 
 def _run_graph_paths_query(tx, seed_ids: list[str], max_depth: int, allowed_relation_kinds: list[str]):

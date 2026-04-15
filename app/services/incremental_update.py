@@ -9,8 +9,13 @@ from app.parsers.exceptions import SourceParseError, UnsupportedLanguageError
 from app.schemas.diff import ChangeType, ParsedDiffResult
 from app.schemas.relations import ExtractedRelation
 from app.schemas.symbols import ExtractedSymbol
+from app.core.settings import get_settings
 from app.services.diff import collect_changed_files_from_diff
 from app.services.source_analysis import analyze_source_file
+from app.storage.neo4j.client import create_neo4j_driver, verify_neo4j_connectivity
+from app.storage.neo4j.reader import Neo4jGraphReader
+from app.storage.neo4j.schema import ensure_neo4j_constraints
+from app.storage.neo4j.writer import Neo4jGraphWriter
 
 logger = get_logger(__name__)
 
@@ -106,3 +111,43 @@ def _record_skipped_file(result: IncrementalAnalysisResult, *, path: str, reason
             "reason": reason,
         },
     )
+
+
+def _update_neo4j_incrementally(analysis_result: IncrementalAnalysisResult) -> dict[str, int]:
+    settings = get_settings()
+    driver = create_neo4j_driver(settings)
+    try:
+        verify_neo4j_connectivity(driver)
+        ensure_neo4j_constraints(driver, database=settings.neo4j_database)
+
+        reader = Neo4jGraphReader(driver, database=settings.neo4j_database)
+        writer = Neo4jGraphWriter(driver, database=settings.neo4j_database)
+
+        paths_to_replace = sorted({*analysis_result.deleted_files, *(item.path for item in analysis_result.analyzed_files)})
+        existing_symbol_ids_by_path = reader.get_symbol_ids_by_paths(paths_to_replace)
+
+        deleted_edges = writer.delete_relations_by_paths(paths_to_replace)
+        deleted_nodes = writer.delete_symbols_by_paths(paths_to_replace)
+
+        all_symbols = [symbol for item in analysis_result.analyzed_files for symbol in item.symbols]
+        all_relations = [relation for item in analysis_result.analyzed_files for relation in item.relations]
+
+        updated_nodes = writer.upsert_symbols(all_symbols)
+        updated_edges = writer.upsert_relations(all_relations)
+
+        logger.info(
+            "incremental_update_neo4j_completed",
+            extra={
+                "changed_files": analysis_result.changed_files,
+                "replaced_paths": paths_to_replace,
+                "existing_symbol_count": sum(len(symbol_ids) for symbol_ids in existing_symbol_ids_by_path.values()),
+                "deleted_nodes": deleted_nodes,
+                "deleted_edges": deleted_edges,
+                "updated_nodes": updated_nodes,
+                "updated_edges": updated_edges,
+            },
+        )
+
+        return {"updated_nodes": updated_nodes, "updated_edges": updated_edges}
+    finally:
+        driver.close()
