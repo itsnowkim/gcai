@@ -139,43 +139,43 @@
 
 ### 2-4. 수정 코드 추출
 
-- [ ] 변경 파일 원문 로드 구현
-- [ ] 변경 심볼 기준 코드 블록 추출 구현
-- [ ] 함수 단위 코드 스니펫 생성
-- [ ] 클래스 단위 코드 스니펫 생성
-- [ ] `modified_code` 응답 schema 정의
+- [x] 변경 파일 원문 로드 구현
+- [x] 변경 심볼 기준 코드 블록 추출 구현
+- [x] 함수 단위 코드 스니펫 생성
+- [x] 클래스 단위 코드 스니펫 생성
+- [x] `modified_code` 응답 schema 정의
 
 ### 2-5. 주변 코드 수집
 
-- [ ] 그래프 탐색 결과에서 관련 심볼 목록 수집
-- [ ] local codebase에서 주변 심볼 코드 추출
-- [ ] ChromaDB 유사 코드 검색 구현
-- [ ] 그래프 기반 결과와 벡터 기반 결과 병합
-- [ ] 중복 코드 제거 로직 구현
-- [ ] `neighbor_code` 응답 schema 정의
+- [x] 그래프 탐색 결과에서 관련 심볼 목록 수집
+- [x] local codebase에서 주변 심볼 코드 추출
+- [x] ChromaDB 유사 코드 검색 구현
+- [x] 그래프 기반 결과와 벡터 기반 결과 병합
+- [x] 중복 코드 제거 로직 구현
+- [x] `neighbor_code` 응답 schema 정의
 
 ### 2-6. 컨텍스트 패키지 생성
 
-- [ ] `changed_files` 생성 로직 구현
-- [ ] `changed_symbols` 생성 로직 구현
-- [ ] `graph_paths` 생성 로직 구현
-- [ ] `modified_code` 구성 로직 구현
-- [ ] `neighbor_code` 구성 로직 구현
-- [ ] 최종 context package schema 작성
-- [ ] JSON 응답 직렬화 검증
+- [x] `changed_files` 생성 로직 구현
+- [x] `changed_symbols` 생성 로직 구현
+- [x] `graph_paths` 생성 로직 구현
+- [x] `modified_code` 구성 로직 구현
+- [x] `neighbor_code` 구성 로직 구현
+- [x] 최종 context package schema 작성
+- [x] JSON 응답 직렬화 검증
 
 ### 2-7. 서비스 검증
 
-- [ ] 샘플 diff 준비
-- [ ] 단일 함수 수정 케이스 검증
-- [ ] 클래스 메서드 수정 케이스 검증
-- [ ] import 변경 케이스 검증
-- [ ] 변경 심볼을 찾지 못한 경우 처리 검증
-- [ ] 빈 주변 코드 결과 처리 검증
+- [x] 샘플 diff 준비
+- [x] 단일 함수 수정 케이스 검증
+- [x] 클래스 메서드 수정 케이스 검증
+- [x] import 변경 케이스 검증
+- [x] 변경 심볼을 찾지 못한 경우 처리 검증
+- [x] 빈 주변 코드 결과 처리 검증
 
 ### Phase 2 완료 기준
 
-- [ ] diff 입력 시 수정된 코드와 주변 코드를 JSON으로 반환 가능
+- [x] diff 입력 시 수정된 코드와 주변 코드를 JSON으로 반환 가능
 
 ## Phase 3. 그래프 증분 갱신
 
