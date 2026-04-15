@@ -6,6 +6,7 @@ from app.schemas.scan import CodebaseScanResult, ScannedFile
 from app.services.chroma_ingest import ingest_scan_result_to_chroma
 from app.storage.chroma.collections import build_callable_collection_name
 from app.storage.chroma.documents import build_chroma_documents
+from app.storage.chroma.reader import ChromaCodeReader
 from app.storage.chroma.writer import ChromaDocumentWriter, _batched
 
 
@@ -122,3 +123,33 @@ def helper(value):
     verify_mock.assert_called_once_with(fake_client)
     writer_cls.assert_called_once_with(fake_client, collection_prefix="gcai")
     fake_writer.upsert_documents.assert_called_once()
+
+
+def test_chroma_reader_queries_collection() -> None:
+    client = MagicMock()
+    collection = MagicMock()
+    collection.query.return_value = {
+        "ids": [["symbol-1"]],
+        "documents": [["def helper(value):\n    return value"]],
+        "metadatas": [[{"symbol_id": "symbol-1", "language": "python", "path": "app/service.py"}]],
+        "distances": [[0.1]],
+    }
+    client.get_or_create_collection.return_value = collection
+
+    reader = ChromaCodeReader(client, collection_prefix="gcai")
+
+    rows = reader.query_similar_code(language="python", query_text="def greet(self): pass", top_k=3)
+
+    assert rows == [
+        {
+            "id": "symbol-1",
+            "document": "def helper(value):\n    return value",
+            "metadata": {"symbol_id": "symbol-1", "language": "python", "path": "app/service.py"},
+            "distance": 0.1,
+        }
+    ]
+    collection.query.assert_called_once_with(
+        query_texts=["def greet(self): pass"],
+        n_results=3,
+        include=["documents", "metadatas", "distances"],
+    )
