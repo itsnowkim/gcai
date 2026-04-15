@@ -15,18 +15,22 @@ class GCAIError(Exception):
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(GCAIError)
     async def handle_gcai_error(request: Request, exc: GCAIError) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None)
         payload = ErrorResponse(
-            request_id=getattr(request.state, "request_id", None),
+            request_id=request_id,
             error_code=exc.error_code,
             message=exc.message,
         )
-        return JSONResponse(status_code=exc.status_code, content=payload.model_dump())
+        headers = {"X-Request-ID": request_id} if request_id else None
+        return JSONResponse(status_code=exc.status_code, content=payload.model_dump(), headers=headers)
 
     @app.exception_handler(Exception)
     async def handle_unexpected_error(request: Request, _: Exception) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None)
         payload = ErrorResponse(
-            request_id=getattr(request.state, "request_id", None),
+            request_id=request_id,
             error_code="internal_error",
             message="Unexpected server error",
         )
-        return JSONResponse(status_code=500, content=payload.model_dump())
+        headers = {"X-Request-ID": request_id} if request_id else None
+        return JSONResponse(status_code=500, content=payload.model_dump(), headers=headers)

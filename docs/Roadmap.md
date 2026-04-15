@@ -232,11 +232,11 @@
 
 ### 4-1. FastAPI 기본 구성
 
-- [ ] FastAPI 앱 생성
-- [ ] 헬스 체크 엔드포인트 구현
-- [ ] 공통 예외 처리기 등록
-- [ ] request/response schema 연결
-- [ ] 설정 로더와 앱 초기화 연결
+- [x] FastAPI 앱 생성
+- [x] 헬스 체크 엔드포인트 구현
+- [x] 공통 예외 처리기 등록
+- [x] request/response schema 연결
+- [x] 설정 로더와 앱 초기화 연결
 
 ### 4-2. Context Package API
 
