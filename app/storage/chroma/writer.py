@@ -37,6 +37,27 @@ class ChromaDocumentWriter:
 
         return len(rows)
 
+    def delete_documents(self, *, language: str, ids: list[str]) -> int:
+        if not ids:
+            return 0
+
+        collection = get_callable_collection(
+            self.client,
+            collection_prefix=self.collection_prefix,
+            language=language,
+        )
+
+        try:
+            for batch in _batched([{"id": row_id} for row_id in ids], self.batch_size):
+                collection.delete(ids=[row["id"] for row in batch])
+        except Exception as exc:  # pragma: no cover - external Chroma failure path
+            raise ChromaStorageError(
+                f"Failed to delete Chroma documents: {exc}",
+                error_code="chroma_delete_error",
+            ) from exc
+
+        return len(ids)
+
 
 def _batched(rows: list[dict[str, object]], batch_size: int):
     iterator = iter(rows)

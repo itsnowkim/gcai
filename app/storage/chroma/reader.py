@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import defaultdict
+
 from app.storage.chroma.collections import get_callable_collection
 from app.storage.chroma.exceptions import ChromaStorageError
 
@@ -53,3 +55,36 @@ class ChromaCodeReader:
                 }
             )
         return rows
+
+    def get_document_ids_by_paths(self, *, language: str, paths: list[str]) -> dict[str, list[str]]:
+        if not paths:
+            return {}
+
+        collection = get_callable_collection(
+            self.client,
+            collection_prefix=self.collection_prefix,
+            language=language,
+        )
+
+        try:
+            result = collection.get(
+                where={"path": {"$in": paths}},
+                include=["metadatas"],
+            )
+        except Exception as exc:  # pragma: no cover - external Chroma failure path
+            raise ChromaStorageError(
+                f"Failed to read Chroma documents: {exc}",
+                error_code="chroma_query_error",
+            ) from exc
+
+        ids = result.get("ids", [])
+        metadatas = result.get("metadatas", [])
+        document_ids_by_path: dict[str, list[str]] = defaultdict(list)
+        for row_id, metadata in zip(ids, metadatas, strict=False):
+            if not isinstance(metadata, dict):
+                continue
+            path = metadata.get("path")
+            if not isinstance(path, str):
+                continue
+            document_ids_by_path[path].append(row_id)
+        return dict(document_ids_by_path)
