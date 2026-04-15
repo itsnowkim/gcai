@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+from pathlib import Path
 
 from app.analyzers.symbols import extract_symbols
 from app.parsers.tree_sitter import parse_source_code
@@ -234,6 +235,7 @@ def helper(value):
 
 def test_collect_incremental_chroma_paths_by_language_includes_deleted_and_missing_supported_files() -> None:
     analysis_result = IncrementalAnalysisResult(
+        repo_path="/repo",
         analyzed_files=[
             IncrementalAnalysisFile(
                 path="app/service.py",
@@ -252,7 +254,11 @@ def test_collect_incremental_chroma_paths_by_language_includes_deleted_and_missi
     result = _collect_incremental_chroma_paths_by_language(analysis_result)
 
     assert result == {
-        "python": ["app/service.py", "legacy/deleted.py", "missing/module.py"],
+        "python": [
+            str((Path("/repo").resolve() / "app/service.py").resolve()),
+            str((Path("/repo").resolve() / "legacy/deleted.py").resolve()),
+            str((Path("/repo").resolve() / "missing/module.py").resolve()),
+        ],
     }
 
 
@@ -268,6 +274,7 @@ def helper(value):
     )
     symbols = extract_symbols(parsed).symbols
     analysis_result = IncrementalAnalysisResult(
+        repo_path="/repo",
         changed_files=["app/service.py", "legacy/deleted.py"],
         analyzed_files=[
             IncrementalAnalysisFile(
@@ -303,9 +310,13 @@ def helper(value):
     verify_mock.assert_called_once_with(fake_client)
     reader_cls.assert_called_once_with(fake_client, collection_prefix="gcai")
     writer_cls.assert_called_once_with(fake_client, collection_prefix="gcai")
+    expected_paths = [
+        str((Path("/repo").resolve() / "app/service.py").resolve()),
+        str((Path("/repo").resolve() / "legacy/deleted.py").resolve()),
+    ]
     fake_reader.get_document_ids_by_paths.assert_called_once_with(
         language="python",
-        paths=["app/service.py", "legacy/deleted.py"],
+        paths=expected_paths,
     )
     fake_writer.delete_documents.assert_called_once_with(language="python", ids=["symbol-1", "symbol-2"])
     fake_writer.upsert_documents.assert_called_once()

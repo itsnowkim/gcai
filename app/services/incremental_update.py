@@ -43,6 +43,7 @@ class IncrementalSkippedFile:
 
 @dataclass(slots=True)
 class IncrementalAnalysisResult:
+    repo_path: str = ""
     changed_files: list[str] = field(default_factory=list)
     analyzed_files: list[IncrementalAnalysisFile] = field(default_factory=list)
     deleted_files: list[str] = field(default_factory=list)
@@ -94,7 +95,7 @@ def _validate_repo_path(repo_path: str) -> Path:
 
 def _analyze_incremental_changes(repo_path: str | Path, parsed_diff: ParsedDiffResult) -> IncrementalAnalysisResult:
     root = Path(repo_path).resolve()
-    result = IncrementalAnalysisResult()
+    result = IncrementalAnalysisResult(repo_path=str(root))
 
     for diff_file in parsed_diff.files:
         normalized_path = _normalize_repo_relative_path(diff_file.path)
@@ -155,7 +156,12 @@ def _update_neo4j_incrementally(analysis_result: IncrementalAnalysisResult) -> d
         reader = Neo4jGraphReader(driver, database=settings.neo4j_database)
         writer = Neo4jGraphWriter(driver, database=settings.neo4j_database)
 
-        paths_to_replace = sorted({*analysis_result.deleted_files, *(item.path for item in analysis_result.analyzed_files)})
+        paths_to_replace = sorted(
+            {
+                *(_to_storage_path(analysis_result.repo_path, path) for path in analysis_result.deleted_files),
+                *(_to_storage_path(analysis_result.repo_path, item.path) for item in analysis_result.analyzed_files),
+            }
+        )
         existing_symbol_ids_by_path = reader.get_symbol_ids_by_paths(paths_to_replace)
 
         deleted_edges = writer.delete_relations_by_paths(paths_to_replace)
@@ -254,7 +260,7 @@ def _collect_incremental_chroma_paths_by_language(analysis_result: IncrementalAn
     paths_by_language: dict[str, set[str]] = {}
 
     for item in analysis_result.analyzed_files:
-        paths_by_language.setdefault(item.language, set()).add(item.path)
+        paths_by_language.setdefault(item.language, set()).add(_to_storage_path(analysis_result.repo_path, item.path))
 
     deleted_or_skipped_paths = [
         *analysis_result.deleted_files,
@@ -265,9 +271,13 @@ def _collect_incremental_chroma_paths_by_language(analysis_result: IncrementalAn
             language = get_language_for_path(path)
         except UnsupportedLanguageError:
             continue
-        paths_by_language.setdefault(language, set()).add(path)
+        paths_by_language.setdefault(language, set()).add(_to_storage_path(analysis_result.repo_path, path))
 
     return {
         language: sorted(paths)
         for language, paths in sorted(paths_by_language.items())
     }
+
+
+def _to_storage_path(repo_path: str, relative_path: str) -> str:
+    return str((Path(repo_path).resolve() / Path(relative_path)).resolve())

@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+from pathlib import Path
 
 from app.parsers.tree_sitter import parse_source_code
 from app.schemas.scan import CodebaseScanResult, ScannedFile
@@ -194,6 +195,7 @@ def greet(name):
     symbols = extract_symbols(parsed).symbols
     relations = extract_relations(parsed).relations
     analysis_result = IncrementalAnalysisResult(
+        repo_path="/repo",
         changed_files=["app/service.py", "legacy/deleted.py"],
         analyzed_files=[
             IncrementalAnalysisFile(
@@ -233,9 +235,13 @@ def greet(name):
     constraints_mock.assert_called_once_with(fake_driver, database="neo4j")
     reader_cls.assert_called_once_with(fake_driver, database="neo4j")
     writer_cls.assert_called_once_with(fake_driver, database="neo4j")
-    fake_reader.get_symbol_ids_by_paths.assert_called_once_with(["app/service.py", "legacy/deleted.py"])
-    fake_writer.delete_relations_by_paths.assert_called_once_with(["app/service.py", "legacy/deleted.py"])
-    fake_writer.delete_symbols_by_paths.assert_called_once_with(["app/service.py", "legacy/deleted.py"])
+    expected_paths = [
+        str((Path("/repo").resolve() / "app/service.py").resolve()),
+        str((Path("/repo").resolve() / "legacy/deleted.py").resolve()),
+    ]
+    fake_reader.get_symbol_ids_by_paths.assert_called_once_with(expected_paths)
+    fake_writer.delete_relations_by_paths.assert_called_once_with(expected_paths)
+    fake_writer.delete_symbols_by_paths.assert_called_once_with(expected_paths)
     fake_writer.upsert_symbols.assert_called_once_with(symbols)
     fake_writer.upsert_relations.assert_called_once_with(relations)
     fake_driver.close.assert_called_once()
