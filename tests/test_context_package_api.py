@@ -75,6 +75,40 @@ def test_context_package_api_surfaces_gcai_errors() -> None:
     assert response.headers["X-Request-ID"] == "req-context-error"
 
 
+def test_context_package_api_rejects_invalid_repo_path() -> None:
+    app = create_app()
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/analyze/context-package",
+            json={"repo_path": "/definitely/missing/repo", "diff": "diff --git a/a.py b/a.py"},
+            headers={"X-Request-ID": "req-context-invalid-path"},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["request_id"] == "req-context-invalid-path"
+    assert response.json()["error_code"] == "invalid_repo_path"
+
+
+def test_context_package_api_rejects_invalid_diff() -> None:
+    app = create_app()
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/analyze/context-package",
+            json={"repo_path": ".", "diff": "not a diff"},
+            headers={"X-Request-ID": "req-context-invalid-diff"},
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "request_id": "req-context-invalid-diff",
+        "error_code": "diff_parse_error",
+        "message": "Unexpected diff content before file header at line 1: not a diff",
+    }
+    assert response.headers["X-Request-ID"] == "req-context-invalid-diff"
+
+
 def test_context_package_api_is_in_openapi() -> None:
     app = create_app()
 

@@ -256,17 +256,17 @@
 
 ### 4-4. API 검증
 
-- [ ] OpenAPI 문서 확인
-- [ ] 샘플 요청으로 context-package API 검증
-- [ ] 샘플 요청으로 incremental-update API 검증
-- [ ] 잘못된 `repo_path` 입력 검증
-- [ ] 잘못된 diff 입력 검증
+- [x] OpenAPI 문서 확인
+- [x] 샘플 요청으로 context-package API 검증
+- [x] 샘플 요청으로 incremental-update API 검증
+- [x] 잘못된 `repo_path` 입력 검증
+- [x] 잘못된 diff 입력 검증
 
 ### Phase 4 완료 기준
 
-- [ ] 아래 2개 API가 동작
-- [ ] `POST /analyze/context-package`
-- [ ] `POST /graph/incremental-update`
+- [x] 아래 2개 API가 동작
+- [x] `POST /analyze/context-package`
+- [x] `POST /graph/incremental-update`
 
 ## Phase 5. Docker 실행 환경
 

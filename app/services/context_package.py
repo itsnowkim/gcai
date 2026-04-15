@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 
+from app.core.exceptions import GCAIError
 from app.core.logging import get_logger
 from app.core.settings import get_settings
 from app.parsers.exceptions import ParserConfigurationError, SourceFileReadError, SourceParseError, UnsupportedLanguageError
@@ -69,7 +70,10 @@ def build_neighbor_code(
 
 def build_context_package(repo_path: str | Path, raw_diff: str) -> ContextPackageResult:
     diff_result = collect_changed_files_from_diff(raw_diff)
-    changed_code_context = collect_changed_code_context(repo_path, diff_result)
+    try:
+        changed_code_context = collect_changed_code_context(repo_path, diff_result)
+    except ValueError as exc:
+        raise GCAIError(str(exc), error_code="invalid_repo_path", status_code=400) from exc
     graph_result = explore_two_hop_from_changed_code(changed_code_context)
     modified_code = build_modified_code(changed_code_context)
     neighbor_code = build_neighbor_code(repo_path, changed_code_context, graph_result)
