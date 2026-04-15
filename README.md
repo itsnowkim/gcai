@@ -87,8 +87,6 @@ curl -X POST http://localhost:8000/graph/incremental-update `
   -d "{\"repo_path\": \"/workspace\", \"diff\": \"diff --git a/app/main.py b/app/main.py\"}"
 ```
 
-The incremental update endpoint is currently a placeholder and is expected to return `501` until phase 3 is implemented.
-
 ## Initial indexing
 
 Run the initial index against the current repository:
