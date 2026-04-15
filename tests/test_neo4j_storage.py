@@ -236,8 +236,8 @@ def greet(name):
     reader_cls.assert_called_once_with(fake_driver, database="neo4j")
     writer_cls.assert_called_once_with(fake_driver, database="neo4j")
     expected_paths = [
-        str((Path("/repo").resolve() / "app/service.py").resolve()),
-        str((Path("/repo").resolve() / "legacy/deleted.py").resolve()),
+        (Path("/repo").resolve() / "app/service.py").resolve().as_posix(),
+        (Path("/repo").resolve() / "legacy/deleted.py").resolve().as_posix(),
     ]
     fake_reader.get_symbol_ids_by_paths.assert_called_once_with(expected_paths)
     fake_writer.delete_relations_by_paths.assert_called_once_with(expected_paths)

@@ -255,9 +255,9 @@ def test_collect_incremental_chroma_paths_by_language_includes_deleted_and_missi
 
     assert result == {
         "python": [
-            str((Path("/repo").resolve() / "app/service.py").resolve()),
-            str((Path("/repo").resolve() / "legacy/deleted.py").resolve()),
-            str((Path("/repo").resolve() / "missing/module.py").resolve()),
+            (Path("/repo").resolve() / "app/service.py").resolve().as_posix(),
+            (Path("/repo").resolve() / "legacy/deleted.py").resolve().as_posix(),
+            (Path("/repo").resolve() / "missing/module.py").resolve().as_posix(),
         ],
     }
 
@@ -311,8 +311,8 @@ def helper(value):
     reader_cls.assert_called_once_with(fake_client, collection_prefix="gcai")
     writer_cls.assert_called_once_with(fake_client, collection_prefix="gcai")
     expected_paths = [
-        str((Path("/repo").resolve() / "app/service.py").resolve()),
-        str((Path("/repo").resolve() / "legacy/deleted.py").resolve()),
+        (Path("/repo").resolve() / "app/service.py").resolve().as_posix(),
+        (Path("/repo").resolve() / "legacy/deleted.py").resolve().as_posix(),
     ]
     fake_reader.get_document_ids_by_paths.assert_called_once_with(
         language="python",

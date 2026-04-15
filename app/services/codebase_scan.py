@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from app.core.paths import to_posix_absolute_path
 from app.parsers.exceptions import SourceParseError, UnsupportedLanguageError
 from app.parsers.languages import get_language_for_path
 from app.schemas.scan import CodebaseScanResult, ScannedFile, SkippedFile
@@ -62,7 +63,7 @@ def scan_codebase(
         )
 
     return CodebaseScanResult(
-        repo_path=str(root),
+        repo_path=to_posix_absolute_path(root),
         scanned_files=scanned_files,
         skipped_files=skipped_files,
     )

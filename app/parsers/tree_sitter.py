@@ -3,6 +3,7 @@ from pathlib import Path
 
 from tree_sitter import Node, Tree
 
+from app.core.paths import to_posix_absolute_path
 from app.parsers.exceptions import SourceParseError
 from app.parsers.files import read_source_file
 from app.parsers.languages import get_language_for_path, get_parser_for_language
@@ -44,7 +45,7 @@ def parse_file(path: str | Path, *, fail_on_syntax_error: bool = True) -> Parsed
     return parse_source_code(
         source_bytes,
         language_name,
-        path=str(path),
+        path=to_posix_absolute_path(path),
         fail_on_syntax_error=fail_on_syntax_error,
     )
 

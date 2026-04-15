@@ -87,7 +87,7 @@ index 1111111..2222222 100644
             assert result.reindexed_embeddings == 3
             assert result.status == "ok"
 
-            storage_path = str(target_file.resolve())
+            storage_path = target_file.resolve().as_posix()
             qualified_names = _get_neo4j_symbol_names_for_path(storage_path)
             assert "helper" in qualified_names
             assert "format_name" in qualified_names

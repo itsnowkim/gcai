@@ -5,6 +5,7 @@ from pathlib import Path
 
 from app.core.exceptions import GCAIError
 from app.core.logging import get_logger
+from app.core.paths import join_repo_relative_path, to_posix_absolute_path, to_posix_path
 from app.parsers.exceptions import SourceParseError, UnsupportedLanguageError
 from app.parsers.languages import get_language_for_path
 from app.schemas.diff import ChangeType, ParsedDiffResult
@@ -95,7 +96,7 @@ def _validate_repo_path(repo_path: str) -> Path:
 
 def _analyze_incremental_changes(repo_path: str | Path, parsed_diff: ParsedDiffResult) -> IncrementalAnalysisResult:
     root = Path(repo_path).resolve()
-    result = IncrementalAnalysisResult(repo_path=str(root))
+    result = IncrementalAnalysisResult(repo_path=to_posix_absolute_path(root))
 
     for diff_file in parsed_diff.files:
         normalized_path = _normalize_repo_relative_path(diff_file.path)
@@ -132,7 +133,7 @@ def _analyze_incremental_changes(repo_path: str | Path, parsed_diff: ParsedDiffR
 
 
 def _normalize_repo_relative_path(path: str) -> str:
-    return Path(path).as_posix()
+    return to_posix_path(path)
 
 
 def _record_skipped_file(result: IncrementalAnalysisResult, *, path: str, reason: str) -> None:
@@ -280,4 +281,4 @@ def _collect_incremental_chroma_paths_by_language(analysis_result: IncrementalAn
 
 
 def _to_storage_path(repo_path: str, relative_path: str) -> str:
-    return str((Path(repo_path).resolve() / Path(relative_path)).resolve())
+    return join_repo_relative_path(repo_path, relative_path)

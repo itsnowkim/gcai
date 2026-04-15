@@ -65,7 +65,7 @@ def test_parse_file_reads_and_parses_python(tmp_path: Path) -> None:
 
     parsed = parse_file(source_path)
 
-    assert parsed.path == str(source_path)
+    assert parsed.path == source_path.resolve().as_posix()
     assert parsed.tree.root_node.type == "module"
 
 
