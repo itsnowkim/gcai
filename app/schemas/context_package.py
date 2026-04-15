@@ -38,3 +38,8 @@ class ContextPackageResult(BaseModel):
     graph_paths: list[GraphPath] = Field(default_factory=list)
     modified_code: list[ModifiedCodeSnippet] = Field(default_factory=list)
     neighbor_code: list[NeighborCodeSnippet] = Field(default_factory=list)
+
+
+class ContextPackageRequest(BaseModel):
+    repo_path: str = Field(min_length=1)
+    diff: str = Field(min_length=1)
