@@ -248,11 +248,11 @@
 
 ### 4-3. Incremental Update API
 
-- [ ] `POST /graph/incremental-update` 엔드포인트 구현
-- [ ] 요청 body 검증 구현
-- [ ] 서비스 계층 연결
-- [ ] 응답 schema 반환 구현
-- [ ] 실패 응답 처리 구현
+- [x] `POST /graph/incremental-update` 엔드포인트 구현
+- [x] 요청 body 검증 구현
+- [x] 서비스 계층 연결
+- [x] 응답 schema 반환 구현
+- [x] 실패 응답 처리 구현
 
 ### 4-4. API 검증
 

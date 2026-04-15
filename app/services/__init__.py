@@ -12,6 +12,7 @@ from app.services.graph_explore import (
     explore_two_hop_from_changed_code,
 )
 from app.services.indexing import run_initial_index
+from app.services.incremental_update import run_incremental_update
 from app.services.source_analysis import analyze_source_file
 
 __all__ = [
@@ -29,5 +30,6 @@ __all__ = [
     "ingest_scan_result_to_chroma",
     "ingest_scan_result_to_neo4j",
     "run_initial_index",
+    "run_incremental_update",
     "scan_codebase",
 ]

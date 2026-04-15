@@ -7,6 +7,7 @@ from app.schemas.context_package import (
 )
 from app.schemas.diff import ChangeType, DiffHunk, DiffLineRange, ParsedDiffFile, ParsedDiffResult
 from app.schemas.graph import GraphEdge, GraphExploreResult, GraphNode, GraphPath, OneHopGraphResult, SeedNode
+from app.schemas.incremental_update import IncrementalUpdateRequest, IncrementalUpdateResult
 from app.schemas.indexing import InitialIndexResult
 from app.schemas.relations import ExtractedRelation, RelationExtractionResult, RelationKind
 from app.schemas.scan import CodebaseScanResult, ScannedFile, SkippedFile
@@ -28,6 +29,8 @@ __all__ = [
     "GraphExploreResult",
     "GraphNode",
     "GraphPath",
+    "IncrementalUpdateRequest",
+    "IncrementalUpdateResult",
     "InitialIndexResult",
     "OneHopGraphResult",
     "ParsedDiffFile",
