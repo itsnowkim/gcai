@@ -8,6 +8,7 @@ from app.core.logging import get_logger
 from app.parsers.exceptions import SourceParseError, UnsupportedLanguageError
 from app.parsers.languages import get_language_for_path
 from app.schemas.diff import ChangeType, ParsedDiffResult
+from app.schemas.incremental_update import IncrementalUpdateResult
 from app.schemas.relations import ExtractedRelation
 from app.schemas.scan import CodebaseScanResult, ScannedFile
 from app.schemas.symbols import ExtractedSymbol
@@ -49,21 +50,46 @@ class IncrementalAnalysisResult:
 
 
 def run_incremental_update(repo_path: str, raw_diff: str):
-    _validate_repo_path(repo_path)
-    collect_changed_files_from_diff(raw_diff)
-    raise GCAIError(
-        "Incremental graph update service is not implemented yet. Complete phase 3 first.",
-        error_code="incremental_update_not_implemented",
-        status_code=501,
+    root = _validate_repo_path(repo_path)
+    parsed_diff = collect_changed_files_from_diff(raw_diff)
+    analysis_result = _analyze_incremental_changes(root, parsed_diff)
+
+    neo4j_result = _update_neo4j_incrementally(analysis_result)
+    chroma_result = _update_chroma_incrementally(analysis_result)
+
+    result = IncrementalUpdateResult(
+        changed_files=analysis_result.changed_files,
+        updated_nodes=neo4j_result["updated_nodes"],
+        updated_edges=neo4j_result["updated_edges"],
+        reindexed_embeddings=chroma_result["reindexed_embeddings"],
+        status="ok",
     )
+    logger.info(
+        "incremental_update_completed",
+        extra={
+            "repo_path": str(root),
+            "changed_files": result.changed_files,
+            "updated_nodes": result.updated_nodes,
+            "updated_edges": result.updated_edges,
+            "reindexed_embeddings": result.reindexed_embeddings,
+            "skipped_files": [
+                {"path": item.path, "reason": item.reason}
+                for item in analysis_result.skipped_files
+            ],
+            "deleted_files": analysis_result.deleted_files,
+            "status": result.status,
+        },
+    )
+    return result
 
 
-def _validate_repo_path(repo_path: str) -> None:
+def _validate_repo_path(repo_path: str) -> Path:
     path = Path(repo_path).resolve()
     if not path.exists():
         raise GCAIError(f"Repository path does not exist: {path}", error_code="invalid_repo_path", status_code=400)
     if not path.is_dir():
         raise GCAIError(f"Repository path is not a directory: {path}", error_code="invalid_repo_path", status_code=400)
+    return path
 
 
 def _analyze_incremental_changes(repo_path: str | Path, parsed_diff: ParsedDiffResult) -> IncrementalAnalysisResult:

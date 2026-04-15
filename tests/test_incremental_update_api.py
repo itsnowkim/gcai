@@ -42,23 +42,35 @@ def test_incremental_update_api_validates_required_fields() -> None:
     assert response.status_code == 422
 
 
-def test_incremental_update_api_surfaces_not_implemented_error() -> None:
+def test_incremental_update_api_returns_service_result() -> None:
     app = create_app()
+    fake_result = IncrementalUpdateResult(
+        changed_files=["app/service.py"],
+        updated_nodes=5,
+        updated_edges=8,
+        reindexed_embeddings=2,
+        status="ok",
+    )
 
-    with TestClient(app) as client:
+    with (
+        patch("app.api.routes.incremental_update.run_incremental_update", return_value=fake_result),
+        TestClient(app) as client,
+    ):
         response = client.post(
             "/graph/incremental-update",
-            json={"repo_path": ".", "diff": "diff --git a/a.py b/a.py"},
-            headers={"X-Request-ID": "req-incremental-error"},
+            json={"repo_path": ".", "diff": "diff --git a/app/service.py b/app/service.py"},
+            headers={"X-Request-ID": "req-incremental-success"},
         )
 
-    assert response.status_code == 501
+    assert response.status_code == 200
     assert response.json() == {
-        "request_id": "req-incremental-error",
-        "error_code": "incremental_update_not_implemented",
-        "message": "Incremental graph update service is not implemented yet. Complete phase 3 first.",
+        "changed_files": ["app/service.py"],
+        "updated_nodes": 5,
+        "updated_edges": 8,
+        "reindexed_embeddings": 2,
+        "status": "ok",
     }
-    assert response.headers["X-Request-ID"] == "req-incremental-error"
+    assert response.headers["X-Request-ID"] == "req-incremental-success"
 
 
 def test_incremental_update_api_rejects_invalid_repo_path() -> None:
